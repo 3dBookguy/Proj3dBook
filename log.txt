@@ -1,0 +1,813 @@
+===== Log started at 2019-02-04, 14:53:22. =====
+
+14:53:22  Window::Window if (winType == MAIN_WIN)
+14:53:22  HWND Window::create(WinType winType)
+14:53:22  in winProc rcvd WM_NCCREATE
+14:53:22  in winProc rcvd WM_CREATE
+14:53:22  ControllerMain::create()
+14:53:22  in main: mainWin is created.
+14:53:22  HWND Window::create(WinType winType)
+14:53:22  in winProc rcvd WM_NCCREATE
+14:53:22  in winProc rcvd WM_CREATE
+14:53:22  ControllerGL::create()
+14:53:22  ViewGL::create((HWND hwnd)
+14:53:22  in winProc rcvd WM_SIZE
+14:53:22  ControllerGL::size(int x = 0  y  = 0  )
+14:53:22  void ViewGL::resizeWindow(int w = 0, int h = 0)
+14:53:22  HWND Window::create have Handel to viewGL
+14:53:22  Window::create have threadHandle.
+14:53:22  Window::threadFunction(void* param)
+14:53:23  Window::runThread()
+14:53:23  Window::createContext(HWND handle)
+14:53:24  Yeah! ... , we have GLEW version
+14:53:25  2.1.0
+14:53:25  GLEW_ARB_vertex_program
+14:53:26  Yeah! ... , we have GL version
+14:53:26  4.0.0 NVIDIA 388.73
+14:53:27  Yeah! ... , we have GL vendor
+14:53:27  NVIDIA Corporation
+14:53:27  Yeah! ... , we have GPU
+14:53:27  GeForce GTX 1050/PCIe/SSE2
+14:53:27  Yeah! ... , we have GLSL
+14:53:27  4.00 NVIDIA via Cg compiler
+14:53:27  Void Window::runThread()  OpenGL rendering context created
+14:53:27  createContext
+14:53:27  ModelGL::LoadShader() a_iShaderType = 35633
+14:53:27  ModelGL::LoadShader() a_iShaderType = 35632
+14:53:27  in main: OpenGL child window is created.
+14:53:27  HWND Window::create(WinType winType)
+14:53:27  in winProc rcvd WM_NCCREATE
+14:53:27  in winProc rcvd WM_CREATE
+14:53:27  ControllerDW::create(HWND hwnd)
+14:53:27   ViewDW::create(HWND hwnd)
+14:53:27  ViewDW::initDW()
+14:53:27  ViewDW::initDW() GetDpiForWindow(dwHandle) = 96; 
+14:53:27  ViewDW::initDW() dpiScaleX_= 96.000000
+14:53:27  ViewDW::openDW_file( int reloadFlag )
+14:53:27  wstring ViewDW::ReadUTF16(const wstring & filename)
+14:53:27  ViewDW::parseText()
+14:53:27  void ViewDW::readFontTable()
+14:53:27  Cambria Math
+14:53:27  Arial
+14:53:27  Times New Roman
+14:53:27  Courier New
+14:53:27  Superscript
+14:53:27  Subscript
+14:53:27  Pages.resize(11);
+14:53:27  numberOfPages = 11
+14:53:27  ViewDW::countFormatBlocks()
+14:53:27  \f1\$32
+14:53:27  \f1\$40
+14:53:27  \$32
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \b
+14:53:27  \b0
+14:53:27  \f3
+14:53:27  \f1
+14:53:27  \i
+14:53:27  \i0
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  \f1\$32
+14:53:27  in winProc rcvd WM_SIZE
+14:53:27  ControllerDW::size(int x = 0  y  = 0  )
+14:53:27  ViewDW::size 0x0
+14:53:27  in main: DW child window is created.
+14:53:27  Window::show(int cmdShow)
+14:53:27  Window::show(int cmdShow)
+14:53:27  Window::show(int cmdShow)
+14:53:27  in winProc rcvd WM_SIZE
+14:53:27  ControllerMain::size() x = 1428 y = 754  wParam = 0
+14:53:27  in winProc rcvd WM_SIZE
+14:53:27  ControllerGL::size(int x = 710  y  = 750  )
+14:53:27  void ViewGL::resizeWindow(int w = 710, int h = 750)
+14:53:27  in winProc rcvd WM_SIZE
+14:53:27  ControllerDW::size(int x = 710  y  = 750  )
+14:53:27  ViewDW::size 710x750
+14:53:27  winProc WM_PAINT
+14:53:27  winProc WM_PAINT
+14:53:27  winProc WM_PAINT
+14:53:27  ControllerDW::paint()
+14:53:27  ViewDW::drawDW() 
+14:53:27  in winProc rcvd WM_SIZE
+14:53:27  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:28  ViewDW::setPageSize(int pageNumber) = 0
+14:53:28  ViewDW::setLeftRightLayout() 
+14:53:28  ViewDW::createLayout(int pageNumber, int side) 
+14:53:28  void ViewDW::setMenuText( parameter = 40001)
+14:53:28  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:28  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:28  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:28  winProc WM_PAINT
+14:53:28  ControllerDW::paint()
+14:53:28  ViewDW::drawDW() 
+14:53:28  in winProc rcvd WM_SIZE
+14:53:28  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:28  ViewDW::setPageSize(int pageNumber) = 0
+14:53:28  ViewDW::setLeftRightLayout() 
+14:53:28  ViewDW::createLayout(int pageNumber, int side) 
+14:53:28  void ViewDW::setMenuText( parameter = 40001)
+14:53:28  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:28  void ViewGL::resizeWindow(int w = 710, int h = 750)
+14:53:28  ViewGL::generateGL_Buffers()
+14:53:30  winProc WM_PAINT
+14:53:30  ControllerDW::paint()
+14:53:30  ViewDW::drawDW() 
+14:53:30  in winProc rcvd WM_SIZE
+14:53:30  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:30  ViewDW::setPageSize(int pageNumber) = 0
+14:53:30  ViewDW::setLeftRightLayout() 
+14:53:30  ViewDW::createLayout(int pageNumber, int side) 
+14:53:30  void ViewDW::setMenuText( parameter = 40001)
+14:53:30  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:30  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:30  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:30  winProc WM_PAINT
+14:53:30  ControllerDW::paint()
+14:53:30  ViewDW::drawDW() 
+14:53:30  in winProc rcvd WM_SIZE
+14:53:30  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:30  ViewDW::setPageSize(int pageNumber) = 0
+14:53:30  ViewDW::setLeftRightLayout() 
+14:53:30  ViewDW::createLayout(int pageNumber, int side) 
+14:53:30  void ViewDW::setMenuText( parameter = 40001)
+14:53:30  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:30  winProc WM_PAINT
+14:53:30  ControllerDW::paint()
+14:53:30  ViewDW::drawDW() 
+14:53:30  in winProc rcvd WM_SIZE
+14:53:30  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:30  ViewDW::setPageSize(int pageNumber) = 0
+14:53:30  ViewDW::setLeftRightLayout() 
+14:53:30  ViewDW::createLayout(int pageNumber, int side) 
+14:53:30  void ViewDW::setMenuText( parameter = 40001)
+14:53:30  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:30  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:30  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:30  winProc WM_PAINT
+14:53:30  ControllerDW::paint()
+14:53:30  ViewDW::drawDW() 
+14:53:30  in winProc rcvd WM_SIZE
+14:53:30  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:30  ViewDW::setPageSize(int pageNumber) = 0
+14:53:30  ViewDW::setLeftRightLayout() 
+14:53:30  ViewDW::createLayout(int pageNumber, int side) 
+14:53:30  void ViewDW::setMenuText( parameter = 40001)
+14:53:30  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:30  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:30  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:30  winProc WM_PAINT
+14:53:30  ControllerDW::paint()
+14:53:30  ViewDW::drawDW() 
+14:53:30  in winProc rcvd WM_SIZE
+14:53:30  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:30  ViewDW::setPageSize(int pageNumber) = 0
+14:53:30  ViewDW::setLeftRightLayout() 
+14:53:30  ViewDW::createLayout(int pageNumber, int side) 
+14:53:30  void ViewDW::setMenuText( parameter = 40001)
+14:53:30  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:30  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:30  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:30  winProc WM_PAINT
+14:53:30  ControllerDW::paint()
+14:53:30  ViewDW::drawDW() 
+14:53:30  in winProc rcvd WM_SIZE
+14:53:30  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:30  ViewDW::setPageSize(int pageNumber) = 0
+14:53:30  ViewDW::setLeftRightLayout() 
+14:53:30  ViewDW::createLayout(int pageNumber, int side) 
+14:53:30  void ViewDW::setMenuText( parameter = 40001)
+14:53:30  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:30  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:30  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:31  winProc WM_PAINT
+14:53:31  ControllerDW::paint()
+14:53:31  ViewDW::drawDW() 
+14:53:31  in winProc rcvd WM_SIZE
+14:53:31  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:31  ViewDW::setPageSize(int pageNumber) = 0
+14:53:31  ViewDW::setLeftRightLayout() 
+14:53:31  ViewDW::createLayout(int pageNumber, int side) 
+14:53:31  void ViewDW::setMenuText( parameter = 40001)
+14:53:31  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:31  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:31  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:31  winProc WM_PAINT
+14:53:31  ControllerDW::paint()
+14:53:31  ViewDW::drawDW() 
+14:53:31  in winProc rcvd WM_SIZE
+14:53:31  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:31  ViewDW::setPageSize(int pageNumber) = 0
+14:53:31  ViewDW::setLeftRightLayout() 
+14:53:31  ViewDW::createLayout(int pageNumber, int side) 
+14:53:31  void ViewDW::setMenuText( parameter = 40001)
+14:53:31  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:31  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:31  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:31  winProc WM_PAINT
+14:53:31  ControllerDW::paint()
+14:53:31  ViewDW::drawDW() 
+14:53:31  in winProc rcvd WM_SIZE
+14:53:31  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:31  ViewDW::setPageSize(int pageNumber) = 0
+14:53:31  ViewDW::setLeftRightLayout() 
+14:53:31  ViewDW::createLayout(int pageNumber, int side) 
+14:53:31  void ViewDW::setMenuText( parameter = 40001)
+14:53:31  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:32  winProc WM_PAINT
+14:53:32  ControllerDW::paint()
+14:53:32  ViewDW::drawDW() 
+14:53:32  in winProc rcvd WM_SIZE
+14:53:32  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:32  ViewDW::setPageSize(int pageNumber) = 0
+14:53:32  ViewDW::setLeftRightLayout() 
+14:53:32  ViewDW::createLayout(int pageNumber, int side) 
+14:53:32  void ViewDW::setMenuText( parameter = 40001)
+14:53:32  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:32  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:32  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:32  winProc WM_PAINT
+14:53:32  ControllerDW::paint()
+14:53:32  ViewDW::drawDW() 
+14:53:32  in winProc rcvd WM_SIZE
+14:53:32  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:32  ViewDW::setPageSize(int pageNumber) = 0
+14:53:32  ViewDW::setLeftRightLayout() 
+14:53:32  ViewDW::createLayout(int pageNumber, int side) 
+14:53:32  void ViewDW::setMenuText( parameter = 40001)
+14:53:32  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:32  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:32  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:32  winProc WM_PAINT
+14:53:32  ControllerDW::paint()
+14:53:32  ViewDW::drawDW() 
+14:53:32  in winProc rcvd WM_SIZE
+14:53:32  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:32  ViewDW::setPageSize(int pageNumber) = 0
+14:53:32  ViewDW::setLeftRightLayout() 
+14:53:32  ViewDW::createLayout(int pageNumber, int side) 
+14:53:32  void ViewDW::setMenuText( parameter = 40001)
+14:53:32  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:32  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:32  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:32  winProc WM_PAINT
+14:53:32  ControllerDW::paint()
+14:53:32  ViewDW::drawDW() 
+14:53:32  in winProc rcvd WM_SIZE
+14:53:32  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:32  ViewDW::setPageSize(int pageNumber) = 0
+14:53:32  ViewDW::setLeftRightLayout() 
+14:53:32  ViewDW::createLayout(int pageNumber, int side) 
+14:53:32  void ViewDW::setMenuText( parameter = 40001)
+14:53:32  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:32  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:32  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:32  winProc WM_PAINT
+14:53:32  ControllerDW::paint()
+14:53:32  ViewDW::drawDW() 
+14:53:32  in winProc rcvd WM_SIZE
+14:53:32  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:32  ViewDW::setPageSize(int pageNumber) = 0
+14:53:32  ViewDW::setLeftRightLayout() 
+14:53:32  ViewDW::createLayout(int pageNumber, int side) 
+14:53:32  void ViewDW::setMenuText( parameter = 40001)
+14:53:32  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:32  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:32  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:33  ControllerDW::lButtonDown(WPARAM state =1, x = 468, y = 5)
+14:53:33  ViewDW::lButtonDown(int x = 468 , int y = 5, item = -1)
+14:53:33  ViewDW::lButtonDownif( bMainMenu ) iMenuCell = 8
+14:53:33  void ViewDW::setMenuText( parameter = 8)
+14:53:33  void ViewDW::setMenuText(bColorMenu)
+14:53:33  winProc WM_PAINT
+14:53:33  ControllerDW::paint()
+14:53:33  ViewDW::drawDW() 
+14:53:33  in winProc rcvd WM_SIZE
+14:53:33  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:33  ViewDW::setPageSize(int pageNumber) = 0
+14:53:33  ViewDW::setLeftRightLayout() 
+14:53:33  ViewDW::createLayout(int pageNumber, int side) 
+14:53:33  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:33  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:33  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:35  winProc WM_PAINT
+14:53:35  ControllerDW::paint()
+14:53:35  ViewDW::drawDW() 
+14:53:35  in winProc rcvd WM_SIZE
+14:53:35  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:35  ViewDW::setPageSize(int pageNumber) = 0
+14:53:35  ViewDW::setLeftRightLayout() 
+14:53:35  ViewDW::createLayout(int pageNumber, int side) 
+14:53:35  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:35  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:35  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:35  winProc WM_PAINT
+14:53:35  ControllerDW::paint()
+14:53:35  ViewDW::drawDW() 
+14:53:35  in winProc rcvd WM_SIZE
+14:53:35  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:35  ViewDW::setPageSize(int pageNumber) = 0
+14:53:35  ViewDW::setLeftRightLayout() 
+14:53:35  ViewDW::createLayout(int pageNumber, int side) 
+14:53:35  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:35  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:35  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:37  ControllerDW::lButtonDown(WPARAM state =1, x = 470, y = 24)
+14:53:39  winProc WM_PAINT
+14:53:39  ControllerDW::paint()
+14:53:39  ViewDW::drawDW() 
+14:53:39  in winProc rcvd WM_SIZE
+14:53:39  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:39  ViewDW::setPageSize(int pageNumber) = 0
+14:53:39  ViewDW::setLeftRightLayout() 
+14:53:39  ViewDW::createLayout(int pageNumber, int side) 
+14:53:39  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:39  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:39  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:39  winProc WM_PAINT
+14:53:39  ControllerDW::paint()
+14:53:39  ViewDW::drawDW() 
+14:53:39  in winProc rcvd WM_SIZE
+14:53:39  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:39  ViewDW::setPageSize(int pageNumber) = 0
+14:53:39  ViewDW::setLeftRightLayout() 
+14:53:39  ViewDW::createLayout(int pageNumber, int side) 
+14:53:39  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:39  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:39  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:39  winProc WM_PAINT
+14:53:39  ControllerDW::paint()
+14:53:39  ViewDW::drawDW() 
+14:53:39  in winProc rcvd WM_SIZE
+14:53:39  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:39  ViewDW::setPageSize(int pageNumber) = 0
+14:53:39  ViewDW::setLeftRightLayout() 
+14:53:39  ViewDW::createLayout(int pageNumber, int side) 
+14:53:39  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:39  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:39  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:39  winProc WM_PAINT
+14:53:39  ControllerDW::paint()
+14:53:39  ViewDW::drawDW() 
+14:53:39  in winProc rcvd WM_SIZE
+14:53:39  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:39  ViewDW::setPageSize(int pageNumber) = 0
+14:53:39  ViewDW::setLeftRightLayout() 
+14:53:39  ViewDW::createLayout(int pageNumber, int side) 
+14:53:39  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:39  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:39  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:39  winProc WM_PAINT
+14:53:39  ControllerDW::paint()
+14:53:39  ViewDW::drawDW() 
+14:53:39  in winProc rcvd WM_SIZE
+14:53:39  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:39  ViewDW::setPageSize(int pageNumber) = 0
+14:53:39  ViewDW::setLeftRightLayout() 
+14:53:39  ViewDW::createLayout(int pageNumber, int side) 
+14:53:39  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:39  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:39  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:39  winProc WM_PAINT
+14:53:39  ControllerDW::paint()
+14:53:39  ViewDW::drawDW() 
+14:53:39  in winProc rcvd WM_SIZE
+14:53:39  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:39  ViewDW::setPageSize(int pageNumber) = 0
+14:53:39  ViewDW::setLeftRightLayout() 
+14:53:39  ViewDW::createLayout(int pageNumber, int side) 
+14:53:39  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:39  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:39  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:39  winProc WM_PAINT
+14:53:39  ControllerDW::paint()
+14:53:39  ViewDW::drawDW() 
+14:53:39  in winProc rcvd WM_SIZE
+14:53:39  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:39  ViewDW::setPageSize(int pageNumber) = 0
+14:53:39  ViewDW::setLeftRightLayout() 
+14:53:39  ViewDW::createLayout(int pageNumber, int side) 
+14:53:39  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:39  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:39  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:39  winProc WM_PAINT
+14:53:40  ControllerDW::paint()
+14:53:40  ViewDW::drawDW() 
+14:53:40  in winProc rcvd WM_SIZE
+14:53:40  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:40  ViewDW::setPageSize(int pageNumber) = 0
+14:53:40  ViewDW::setLeftRightLayout() 
+14:53:40  ViewDW::createLayout(int pageNumber, int side) 
+14:53:40  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:40  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:40  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:40  winProc WM_PAINT
+14:53:40  ControllerDW::paint()
+14:53:40  ViewDW::drawDW() 
+14:53:40  in winProc rcvd WM_SIZE
+14:53:40  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:40  ViewDW::setPageSize(int pageNumber) = 0
+14:53:40  ViewDW::setLeftRightLayout() 
+14:53:40  ViewDW::createLayout(int pageNumber, int side) 
+14:53:40  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:40  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:40  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:40  winProc WM_PAINT
+14:53:40  ControllerDW::paint()
+14:53:40  ViewDW::drawDW() 
+14:53:40  in winProc rcvd WM_SIZE
+14:53:40  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:40  ViewDW::setPageSize(int pageNumber) = 0
+14:53:40  ViewDW::setLeftRightLayout() 
+14:53:40  ViewDW::createLayout(int pageNumber, int side) 
+14:53:40  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:40  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:40  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:40  winProc WM_PAINT
+14:53:40  ControllerDW::paint()
+14:53:40  ViewDW::drawDW() 
+14:53:40  in winProc rcvd WM_SIZE
+14:53:40  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:40  ViewDW::setPageSize(int pageNumber) = 0
+14:53:40  ViewDW::setLeftRightLayout() 
+14:53:40  ViewDW::createLayout(int pageNumber, int side) 
+14:53:40  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:40  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:40  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:40  winProc WM_PAINT
+14:53:40  ControllerDW::paint()
+14:53:40  ViewDW::drawDW() 
+14:53:40  in winProc rcvd WM_SIZE
+14:53:40  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:40  ViewDW::setPageSize(int pageNumber) = 0
+14:53:40  ViewDW::setLeftRightLayout() 
+14:53:40  ViewDW::createLayout(int pageNumber, int side) 
+14:53:40  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:40  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:40  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:41  winProc WM_PAINT
+14:53:41  ControllerDW::paint()
+14:53:41  ViewDW::drawDW() 
+14:53:41  in winProc rcvd WM_SIZE
+14:53:41  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:41  ViewDW::setPageSize(int pageNumber) = 0
+14:53:41  ViewDW::setLeftRightLayout() 
+14:53:41  ViewDW::createLayout(int pageNumber, int side) 
+14:53:41  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:41  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:41  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:41  winProc WM_PAINT
+14:53:41  ControllerDW::paint()
+14:53:41  ViewDW::drawDW() 
+14:53:41  in winProc rcvd WM_SIZE
+14:53:41  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:41  ViewDW::setPageSize(int pageNumber) = 0
+14:53:41  ViewDW::setLeftRightLayout() 
+14:53:41  ViewDW::createLayout(int pageNumber, int side) 
+14:53:41  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:41  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:41  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:41  winProc WM_PAINT
+14:53:41  ControllerDW::paint()
+14:53:41  ViewDW::drawDW() 
+14:53:41  in winProc rcvd WM_SIZE
+14:53:41  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:41  ViewDW::setPageSize(int pageNumber) = 0
+14:53:41  ViewDW::setLeftRightLayout() 
+14:53:41  ViewDW::createLayout(int pageNumber, int side) 
+14:53:41  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:41  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:41  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:41  winProc WM_PAINT
+14:53:41  ControllerDW::paint()
+14:53:41  ViewDW::drawDW() 
+14:53:41  in winProc rcvd WM_SIZE
+14:53:41  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:41  ViewDW::setPageSize(int pageNumber) = 0
+14:53:41  ViewDW::setLeftRightLayout() 
+14:53:41  ViewDW::createLayout(int pageNumber, int side) 
+14:53:41  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:41  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:41  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:41  ControllerDW::lButtonDown(WPARAM state =1, x = 469, y = 9)
+14:53:41  ViewDW::lButtonDown(int x = 469 , int y = 9, item = -1)
+14:53:41  winProc WM_PAINT
+14:53:41  ControllerDW::paint()
+14:53:41  ViewDW::drawDW() 
+14:53:41  in winProc rcvd WM_SIZE
+14:53:41  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:41  ViewDW::setPageSize(int pageNumber) = 0
+14:53:41  ViewDW::setLeftRightLayout() 
+14:53:41  ViewDW::createLayout(int pageNumber, int side) 
+14:53:41  void ViewDW::setMenuText( parameter = 40001)
+14:53:41  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:41  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:41  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:42  winProc WM_PAINT
+14:53:42  ControllerDW::paint()
+14:53:42  ViewDW::drawDW() 
+14:53:42  in winProc rcvd WM_SIZE
+14:53:42  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:42  ViewDW::setPageSize(int pageNumber) = 0
+14:53:42  ViewDW::setLeftRightLayout() 
+14:53:42  ViewDW::createLayout(int pageNumber, int side) 
+14:53:42  void ViewDW::setMenuText( parameter = 40001)
+14:53:42  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:42  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:42  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:42  winProc WM_PAINT
+14:53:42  ControllerDW::paint()
+14:53:42  ViewDW::drawDW() 
+14:53:42  in winProc rcvd WM_SIZE
+14:53:43  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:43  ViewDW::setPageSize(int pageNumber) = 0
+14:53:43  ViewDW::setLeftRightLayout() 
+14:53:43  ViewDW::createLayout(int pageNumber, int side) 
+14:53:43  void ViewDW::setMenuText( parameter = 40001)
+14:53:43  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:43  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:43  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:43  winProc WM_PAINT
+14:53:43  ControllerDW::paint()
+14:53:43  ViewDW::drawDW() 
+14:53:43  in winProc rcvd WM_SIZE
+14:53:43  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:43  ViewDW::setPageSize(int pageNumber) = 0
+14:53:43  ViewDW::setLeftRightLayout() 
+14:53:43  ViewDW::createLayout(int pageNumber, int side) 
+14:53:43  void ViewDW::setMenuText( parameter = 40001)
+14:53:43  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:43  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:43  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:43  WM_SYSCOMMAND
+14:53:44  winProc WM_PAINT
+14:53:44  ControllerDW::paint()
+14:53:44  ViewDW::drawDW() 
+14:53:44  in winProc rcvd WM_SIZE
+14:53:44  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:44  ViewDW::setPageSize(int pageNumber) = 0
+14:53:44  ViewDW::setLeftRightLayout() 
+14:53:44  ViewDW::createLayout(int pageNumber, int side) 
+14:53:44  void ViewDW::setMenuText( parameter = 40001)
+14:53:44  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:44  winProc WM_PAINT
+14:53:44  ControllerDW::paint()
+14:53:44  ViewDW::drawDW() 
+14:53:44  in winProc rcvd WM_SIZE
+14:53:44  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:44  ViewDW::setPageSize(int pageNumber) = 0
+14:53:44  ViewDW::setLeftRightLayout() 
+14:53:44  ViewDW::createLayout(int pageNumber, int side) 
+14:53:44  void ViewDW::setMenuText( parameter = 40001)
+14:53:44  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:44  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:44  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:44  winProc WM_PAINT
+14:53:44  ControllerDW::paint()
+14:53:44  ViewDW::drawDW() 
+14:53:44  in winProc rcvd WM_SIZE
+14:53:44  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:44  ViewDW::setPageSize(int pageNumber) = 0
+14:53:44  ViewDW::setLeftRightLayout() 
+14:53:44  ViewDW::createLayout(int pageNumber, int side) 
+14:53:44  void ViewDW::setMenuText( parameter = 40001)
+14:53:44  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:44  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:44  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:44  winProc WM_PAINT
+14:53:44  ControllerDW::paint()
+14:53:44  ViewDW::drawDW() 
+14:53:44  in winProc rcvd WM_SIZE
+14:53:45  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:45  ViewDW::setPageSize(int pageNumber) = 0
+14:53:45  ViewDW::setLeftRightLayout() 
+14:53:45  ViewDW::createLayout(int pageNumber, int side) 
+14:53:45  void ViewDW::setMenuText( parameter = 40001)
+14:53:45  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:45  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:45  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:45  winProc WM_PAINT
+14:53:45  ControllerDW::paint()
+14:53:45  ViewDW::drawDW() 
+14:53:45  in winProc rcvd WM_SIZE
+14:53:45  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:45  ViewDW::setPageSize(int pageNumber) = 0
+14:53:45  ViewDW::setLeftRightLayout() 
+14:53:45  ViewDW::createLayout(int pageNumber, int side) 
+14:53:45  void ViewDW::setMenuText( parameter = 40001)
+14:53:45  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:45  ControllerDW::lButtonDown(WPARAM state =1, x = 466, y = 1)
+14:53:45  ViewDW::lButtonDown(int x = 466 , int y = 1, item = -1)
+14:53:45  winProc WM_PAINT
+14:53:45  ControllerDW::paint()
+14:53:45  ViewDW::drawDW() 
+14:53:45  in winProc rcvd WM_SIZE
+14:53:46  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:46  ViewDW::setPageSize(int pageNumber) = 0
+14:53:46  ViewDW::setLeftRightLayout() 
+14:53:46  ViewDW::createLayout(int pageNumber, int side) 
+14:53:46  void ViewDW::setMenuText( parameter = 40001)
+14:53:46  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:46  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:46  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:46  winProc WM_PAINT
+14:53:46  ControllerDW::paint()
+14:53:46  ViewDW::drawDW() 
+14:53:46  in winProc rcvd WM_SIZE
+14:53:46  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:46  ViewDW::setPageSize(int pageNumber) = 0
+14:53:46  ViewDW::setLeftRightLayout() 
+14:53:46  ViewDW::createLayout(int pageNumber, int side) 
+14:53:46  void ViewDW::setMenuText( parameter = 40001)
+14:53:46  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:46  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:46  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:46  ControllerDW::lButtonDown(WPARAM state =1, x = 466, y = 5)
+14:53:46  ViewDW::lButtonDown(int x = 466 , int y = 5, item = -1)
+14:53:46  ViewDW::lButtonDownif( bMainMenu ) iMenuCell = 8
+14:53:46  void ViewDW::setMenuText( parameter = 8)
+14:53:46  void ViewDW::setMenuText(bColorMenu)
+14:53:46  winProc WM_PAINT
+14:53:46  ControllerDW::paint()
+14:53:46  ViewDW::drawDW() 
+14:53:46  in winProc rcvd WM_SIZE
+14:53:46  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:46  ViewDW::setPageSize(int pageNumber) = 0
+14:53:46  ViewDW::setLeftRightLayout() 
+14:53:46  ViewDW::createLayout(int pageNumber, int side) 
+14:53:46  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:46  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:46  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:47  winProc WM_PAINT
+14:53:47  ControllerDW::paint()
+14:53:47  ViewDW::drawDW() 
+14:53:47  in winProc rcvd WM_SIZE
+14:53:47  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:47  ViewDW::setPageSize(int pageNumber) = 0
+14:53:47  ViewDW::setLeftRightLayout() 
+14:53:47  ViewDW::createLayout(int pageNumber, int side) 
+14:53:47  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:47  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:47  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:47  winProc WM_PAINT
+14:53:47  ControllerDW::paint()
+14:53:47  ViewDW::drawDW() 
+14:53:47  in winProc rcvd WM_SIZE
+14:53:47  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:47  ViewDW::setPageSize(int pageNumber) = 0
+14:53:47  ViewDW::setLeftRightLayout() 
+14:53:47  ViewDW::createLayout(int pageNumber, int side) 
+14:53:47  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:47  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:47  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:47  winProc WM_PAINT
+14:53:47  ControllerDW::paint()
+14:53:47  ViewDW::drawDW() 
+14:53:47  in winProc rcvd WM_SIZE
+14:53:47  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:47  ViewDW::setPageSize(int pageNumber) = 0
+14:53:47  ViewDW::setLeftRightLayout() 
+14:53:47  ViewDW::createLayout(int pageNumber, int side) 
+14:53:47  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:47  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:47  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:47  winProc WM_PAINT
+14:53:47  ControllerDW::paint()
+14:53:47  ViewDW::drawDW() 
+14:53:47  in winProc rcvd WM_SIZE
+14:53:47  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:47  ViewDW::setPageSize(int pageNumber) = 0
+14:53:47  ViewDW::setLeftRightLayout() 
+14:53:47  ViewDW::createLayout(int pageNumber, int side) 
+14:53:47  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:47  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:47  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:47  winProc WM_PAINT
+14:53:47  ControllerDW::paint()
+14:53:47  ViewDW::drawDW() 
+14:53:47  in winProc rcvd WM_SIZE
+14:53:47  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:48  ViewDW::setPageSize(int pageNumber) = 0
+14:53:48  ViewDW::setLeftRightLayout() 
+14:53:48  ViewDW::createLayout(int pageNumber, int side) 
+14:53:48  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:48  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:48  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:48  winProc WM_PAINT
+14:53:48  ControllerDW::paint()
+14:53:48  ViewDW::drawDW() 
+14:53:48  in winProc rcvd WM_SIZE
+14:53:48  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:48  ViewDW::setPageSize(int pageNumber) = 0
+14:53:48  ViewDW::setLeftRightLayout() 
+14:53:48  ViewDW::createLayout(int pageNumber, int side) 
+14:53:48  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:48  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:48  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:48  ControllerDW::lButtonDown(WPARAM state =1, x = 470, y = 7)
+14:53:48  ViewDW::lButtonDown(int x = 470 , int y = 7, item = -1)
+14:53:48  winProc WM_PAINT
+14:53:48  ControllerDW::paint()
+14:53:48  ViewDW::drawDW() 
+14:53:48  in winProc rcvd WM_SIZE
+14:53:48  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:48  ViewDW::setPageSize(int pageNumber) = 0
+14:53:48  ViewDW::setLeftRightLayout() 
+14:53:48  ViewDW::createLayout(int pageNumber, int side) 
+14:53:48  void ViewDW::setMenuText( parameter = 40001)
+14:53:48  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:48  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:48  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:53:58  winProc WM_PAINT
+14:53:58  ControllerDW::paint()
+14:53:58  ViewDW::drawDW() 
+14:53:58  in winProc rcvd WM_SIZE
+14:53:58  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:53:58  ViewDW::setPageSize(int pageNumber) = 0
+14:53:58  ViewDW::setLeftRightLayout() 
+14:53:58  ViewDW::createLayout(int pageNumber, int side) 
+14:53:58  void ViewDW::setMenuText( parameter = 40001)
+14:53:58  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:53:58  ViewDW::drawMenu(cellWidth = 53.787880)
+14:53:58  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:54:04  winProc WM_PAINT
+14:54:04  ControllerDW::paint()
+14:54:04  ViewDW::drawDW() 
+14:54:04  in winProc rcvd WM_SIZE
+14:54:04  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:54:04  ViewDW::setPageSize(int pageNumber) = 0
+14:54:04  ViewDW::setLeftRightLayout() 
+14:54:04  ViewDW::createLayout(int pageNumber, int side) 
+14:54:04  void ViewDW::setMenuText( parameter = 40001)
+14:54:04  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:54:04  winProc WM_PAINT
+14:54:04  ControllerDW::paint()
+14:54:04  ViewDW::drawDW() 
+14:54:04  in winProc rcvd WM_SIZE
+14:54:04  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:54:04  ViewDW::setPageSize(int pageNumber) = 0
+14:54:04  ViewDW::setLeftRightLayout() 
+14:54:04  ViewDW::createLayout(int pageNumber, int side) 
+14:54:04  void ViewDW::setMenuText( parameter = 40001)
+14:54:04  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:54:04  ViewDW::drawMenu(cellWidth = 53.787880)
+14:54:04  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:54:04  winProc WM_PAINT
+14:54:04  ControllerDW::paint()
+14:54:04  ViewDW::drawDW() 
+14:54:04  in winProc rcvd WM_SIZE
+14:54:04  ControllerMain::size() x = 0 y = 0  wParam = 40001
+14:54:04  ViewDW::setPageSize(int pageNumber) = 0
+14:54:04  ViewDW::setLeftRightLayout() 
+14:54:04  ViewDW::createLayout(int pageNumber, int side) 
+14:54:04  void ViewDW::setMenuText( parameter = 40001)
+14:54:04  ViewDW::drawMenu(int windowWidth = 710.000000)
+14:54:04  ViewDW::drawMenu(cellWidth = 53.787880)
+14:54:04  ViewDW::drawPageNumber(int pageNumber, int side) 
+14:54:09  WM_SYSCOMMAND
+14:54:09  winProc WM_CLOSE
+14:54:09  winProc WM_CLOSE
+14:54:09  winProc WM_CLOSE
+14:54:09  winProc WM_DESTROY
+14:54:09  winProc WM_DESTROY
+14:54:09  winProc WM_DESTROY
+14:54:09  ViewDW::DiscardDeviceResources()
+
+
+===== END OF LOG =====

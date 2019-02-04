@@ -1,0 +1,37 @@
+
+//
+#include "resource.h"
+
+// IDR_BOOKTXT TEXTFILE DISCARDABLE "template.txt"
+
+// Changelog flow charts
+//menuFlow Image "MenuFlow.bmp"
+//menuMessages Image "MenuMessages.png"
+
+
+IDR_MAIN_MENU MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+		MENUITEM "&New",    ID_FILE_NEW
+        MENUITEM "&Open",    ID_FILE_OPEN
+	    MENUITEM "&Save",    ID_FILE_SAVE
+        MENUITEM "Save &As",    ID_FILE_AS
+	    MENUITEM "&Exit",    ID_FILE_EXIT
+    END
+	MENUITEM "&Animate", ID_ANIMATE
+	MENUITEM "&Show", ID_FILL
+	MENUITEM "&Wire", ID_WIRE
+	MENUITEM "&Points", ID_POINTS
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_APP_NAME            "DirectWrite           OpenGL"
+END
+
+
+
+
+
+
