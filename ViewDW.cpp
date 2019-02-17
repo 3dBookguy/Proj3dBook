@@ -45,11 +45,14 @@ ViewDW::ViewDW(ViewGL* viewGL):
 // D2D and DirectWrite
     pD2DFactory_(NULL),
 	pDWriteFactory_(NULL),
+	m_pWICFactory(NULL),
+	m_pBitmap(NULL),
     pRT_(NULL),
 
-// rushes
+// Brushes
     pBookTextBrush_(NULL),
 	pPaperBrush_(NULL),
+	pRedBrush_(NULL),
 	pMenuBrush_(NULL),
 
 // DirectWrite
@@ -72,7 +75,9 @@ ViewDW::ViewDW(ViewGL* viewGL):
 	leftPageOrigin.y = constants::pageTop;
 	rightPageOrigin.y = constants::pageTop;
 	menuText.resize(constants::menuCells);
-//	setMenuText(0);
+	fontSizeFactor = 1.25f;
+	imageScale.width = 1.0f;
+	imageScale.height = 1.0f;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -84,6 +89,7 @@ ViewDW::~ViewDW()
 	SafeRelease(&pMenuFormat_);
     SafeRelease(&pD2DFactory_);
     SafeRelease(&pDWriteFactory_);
+	SafeRelease(&m_pWICFactory);
 	DiscardDeviceResources();
 }
 
@@ -94,10 +100,12 @@ void ViewDW::DiscardDeviceResources(){
 
     SafeRelease(&pBookTextBrush_);
     SafeRelease(&pPaperBrush_);
+	SafeRelease(&pRedBrush_);
 	SafeRelease(&pMenuBrush_);
 	SafeRelease(&pLeftLayout_);
 	SafeRelease(&pRightLayout_);
 	SafeRelease(&pMenuLayout_);
+	SafeRelease(&m_pBitmap);
     SafeRelease(&pRT_);
 //		if (pRT_)
 //		pRT_->Release();
@@ -122,14 +130,28 @@ HRESULT ViewDW::initDW(){
 #ifdef DEBUG_GB
 	log(L"ViewDW::initDW()");
 #endif
+
+//	maxClientSize
+////  maxClientArea used to scale text and images to window size
+//	maxClientHeight = GetSystemMetrics(SM_CYFULLSCREEN);
+//	maxClientWidth = GetSystemMetrics(SM_CXFULLSCREEN);
+//	maxClientArea = static_cast<float>(maxClientWidth * maxClientHeight);
+
+	maxClientSize.width = static_cast<float>( GetSystemMetrics(SM_CXFULLSCREEN));
+	maxClientSize.height = static_cast<float>(GetSystemMetrics(SM_CYFULLSCREEN));
+
+//	maxClientWidth = GetSystemMetrics(SM_CXFULLSCREEN);
+	maxClientArea = maxClientSize.width * maxClientSize.height;
+
+
 	UINT DpI(0);
 	HRESULT hr = D2D1CreateFactory( D2D1_FACTORY_TYPE_SINGLE_THREADED, &pD2DFactory_ );
 
 	if (SUCCEEDED(hr)){
 		pD2DFactory_->GetDesktopDpi(&dpiScaleX_, &dpiScaleY_);	
 		DpI = GetDpiForWindow(mainHandle);
-		log(L"ViewDW::initDW() GetDpiForWindow(dwHandle) = %u; ", DpI);
-		log(L"ViewDW::initDW() dpiScaleX_= %f", dpiScaleX_);
+		//log(L"ViewDW::initDW() GetDpiForWindow(dwHandle) = %u; ", DpI);
+		//log(L"ViewDW::initDW() dpiScaleX_= %f", dpiScaleX_);
 		dpiScaleX_ = 96/dpiScaleX_;
 		dpiScaleY_ = 96/dpiScaleY_;
 	}
@@ -139,7 +161,16 @@ HRESULT ViewDW::initDW(){
 				__uuidof(IDWriteFactory),
 				reinterpret_cast<IUnknown**>(&pDWriteFactory_) );
 	}
-	
+
+	// Create WIC factory for LoadBitmapFromFile
+	if (SUCCEEDED(hr)) {        
+		hr = CoCreateInstance(
+			CLSID_WICImagingFactory,
+			NULL,
+			CLSCTX_INPROC_SERVER,
+			IID_PPV_ARGS(&m_pWICFactory)
+		);
+	}
 	if (SUCCEEDED(hr)){ 
 		hr = pDWriteFactory_->CreateTextFormat( 
 			L"Arial",
@@ -192,42 +223,56 @@ HRESULT ViewDW::initDW(){
 //			file2.write((char *) book.c_str(), book.length()*sizeof(wchar_t));
 //		}
 //}
-wstring ViewDW::ReadUTF16(const wstring &filename){
+
+void ViewDW::ReadUTF16(const wstring &filename){
 #ifdef DEBUG_GB
-	log(L"wstring ViewDW::ReadUTF16(const wstring & filename)");
+	log(L"void ViewDW::ReadUTF16(const wstring & filename)");
 #endif
-	activeFile.clear();
-	activeFile.append(filename);
-	int iUniTest = IS_TEXT_UNICODE_SIGNATURE; // 0xFEFF at beginning of file.
-	int cTextLength_;											//  byte order mask
-	wstring error = L"Can not open file";
+	book.clear();
+
     ifstream file(filename.c_str(), std::ios::binary);    // std::ios::binary for Windows
-	if(!file){
-		MessageBox(NULL, TEXT("Could not open"), filename.c_str(), MB_ICONINFORMATION);
-		error = L"Could not open this file..";
-		log(error);
-		bLoadFile = FALSE;
-		return error; }
+	if(!file)
+	{
+		MessageBox(NULL, TEXT("Oops: Could not open this file."), filename.c_str(), MB_ICONINFORMATION);
+		book = L"Could not open this file.";
+		return;
+	}
+
     std::stringstream ss;
     ss << file.rdbuf() << '\0';
-//	 log(wstring((wchar_t *)ss.str().c_str()));
+	int iUniTest = IS_TEXT_UNICODE_SIGNATURE; // 0xFEFF at beginning of file.
+	int cTextLength_;						//  byte order mask
+
 	cTextLength_ = (UINT32)strlen(ss.str().c_str());
-	if(IsTextUnicode(ss.str().c_str(), cTextLength_, &iUniTest)){
-		bLoadFile = TRUE;
-		return wstring((wchar_t *)ss.str().c_str());}
-	else{
+	if(IsTextUnicode(ss.str().c_str(), cTextLength_, &iUniTest))
+	{
+		book = wstring((wchar_t *)ss.str().c_str());
+		return;
+	}
+
+	else 
+	{
 		MessageBox(NULL, TEXT("Not UNICODE"), filename.c_str(), MB_ICONINFORMATION);
-		error = L"This file is not unicode.";
-		log(error);
-		bLoadFile = FALSE;
-		return error;}
+		log(L"This file is not unicode.");
+	}
 
 // Closing of streams:  Done inplicitly by the streams dtor.  So an explicit call to
 //	close() /is needed only if the file must be closed before reaching the end of the
 //	scope  in  which it was declared. 
 } 
-
-
+void ViewDW::loadRecoverText() {
+	book = L"\\tdr1{\\fonttbl{\\f0\\fcharset0 Arial;}{\\endfonttbl;}0123456789xx\\f0\\$32 "
+		L"\n"
+		L"TDR was unable to find or open the start.tdr file\n"
+		L"\n"
+		L"start.tdr may not be in the doc directory.\n"
+		L"\n"
+		L"or start.tdr may be corrupted.\n"
+		L"\n"
+		L"Find or fix start.tdr or load another file.\n"
+		L"\n"
+		L"\\Mode_dW_gL04\\f0\\$32  ";
+}
 bool ViewDW::openDW_file( int reloadFlag ){  
 #ifdef DEBUG_GB	
 	log(L"ViewDW::openDW_file( int reloadFlag )");
@@ -236,16 +281,26 @@ bool ViewDW::openDW_file( int reloadFlag ){
 	if (reloadFlag == constants::HELP)
 	{
 		pageNumber = 0;
-		reload_Filename = L"..\\src\\manual.tdr";
-		book.clear();
-		book = ReadUTF16(reload_Filename.c_str());
+		// Note relative path is not the same for running in VS and from taskbar
+//		reload_Filename = L".\\src\\doc\\manual.tdr";
+		reload_Filename = L"C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\doc\\manual.tdr";
+		ReadUTF16(reload_Filename.c_str());
 	}
-	if( reloadFlag == constants::START_PAGE )
+	else if( reloadFlag == constants::START_PAGE )
 	{	
+
 		pageNumber = 0;
-		reload_Filename = L"..\\src\\start.tdr";
-		book.clear();
-		book = ReadUTF16( reload_Filename.c_str() );  
+		// Note relative path is not the same for running in VS and from taskbar
+//		reload_Filename = L".\\src\\doc\\start.tdr";
+		reload_Filename = L"C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\doc\\start.tdr";
+
+		ReadUTF16( reload_Filename.c_str()); 
+
+		// Let user know TDR Failed to load start.tdr - how to recover, etc.
+		if (book.find(L"Could not open this file.") != wstring::npos) 
+		{
+			loadRecoverText();
+		}
 	}
 	// Loading a new file -- Put up the Open File Dialog
 	else if( reloadFlag == constants::LOAD ){ 
@@ -269,17 +324,17 @@ bool ViewDW::openDW_file( int reloadFlag ){
 		ofn.lpstrInitialDir = NULL;
 		ofn.Flags = OFN_PATHMUSTEXIST|OFN_FILEMUSTEXIST;
 		
-		GetOpenFileName( &ofn );
-		// Save the file name for RELOAD call
-		reload_Filename.clear();
-	    reload_Filename = ofn.lpstrFile;
-
-		book.clear();
-		book = ReadUTF16( reload_Filename.c_str() );  
+		if (GetOpenFileName(&ofn) == TRUE) {
+			// Save the file name for RELOAD call
+			reload_Filename.clear();
+			reload_Filename = ofn.lpstrFile;
+			ReadUTF16(reload_Filename.c_str());
+		}
+		else return FALSE;
 	}
+
 	else if( reloadFlag == constants::RELOAD ){ 
-		book.clear();
-		book = ReadUTF16( reload_Filename.c_str() );  
+		ReadUTF16( reload_Filename.c_str() );  
 	}
 
 // Do some file format checks.
@@ -291,9 +346,10 @@ bool ViewDW::openDW_file( int reloadFlag ){
 
 	if (book.find(L"0123456789xx") == wstring::npos) {
 		MessageBox(NULL, reload_Filename.c_str(),
-			TEXT("This version .tdr file  is no longer supported!"), MB_OK);
+			TEXT("This version .tdr file is no longer supported!"), MB_OK);
 		return FALSE;
 	}
+// Put the file name up on the Title bar and proceed to parse the text.
 	else { 
 		SetWindowText( mainHandle, reload_Filename.c_str()); 
 		parseText();
@@ -311,7 +367,7 @@ void ViewDW::countFormatBlocks(){
 	log(L"ViewDW::countFormatBlocks()");
 #endif
 
-	std::wstring temp;
+//	std::wstring temp;
 
 	int index(0);
 	for( int i = 0; i < numberOfPages; i++ ){
@@ -352,7 +408,8 @@ void ViewDW::countFormatBlocks(){
 //		log(L"Pages[%i].bolds; = %i", i, Pages[i].bolds);
 		Pages[i].boldRange.clear();
 		Pages[i].boldRange.resize(Pages[i].bolds);
-		temp.clear();
+//		temp.clear();
+
 // ---- Underlines ----
 		index = 0;
 		Pages[i].ulines = 0;
@@ -391,10 +448,28 @@ void ViewDW::countFormatBlocks(){
 // ---- Font Names ----
 		index = 0;
 		Pages[i].names = 0;
-		while( index  > -1 )
+		while (index > -1)
 		{
 			index = Pages[i].text.find(L"\\f", index);
-			if( index < 0 ) break;
+			if (index < 0) break;
+			if (Pages[i].text[index + 3] != L' ' && Pages[i].text[index + 3] != L'\\')
+			{
+				std::wstring page = to_wstring(i);
+				page.append(L" = the page the error was found on." );
+				MessageBox(NULL,
+					TEXT("Font name format error found on page \n"
+					"check for missing space after the format block.\n"
+					"See log.txt for details.  TDR will add the missing space\n"
+					"but the .tdr file needs to be corrected."), page.c_str(), MB_ICONWARNING);
+
+				std::wstring space = L" ";
+				Pages[i].text.insert(index + 3, space);
+				log(L"Pages[%i] format error: index = %i", i, index);				
+				page.clear();
+				// need to do some range checking here
+				page.append(Pages[i].text, index , 15);
+				log(page);
+			}
 			++Pages[i].names;			
 			++index;
 		}
@@ -403,7 +478,24 @@ void ViewDW::countFormatBlocks(){
 		Pages[i].fontNumbers.resize(Pages[i].names);
 		Pages[i].fontNameRange.clear();
 		Pages[i].fontNameRange.resize(Pages[i].names);
-	}
+
+// ---- Images ----
+		index = 0;
+		Pages[i].images = 0;
+		while (index > -1)
+		{
+			index = Pages[i].text.find(L"\\c", index);
+			if (index < 0) break;
+			++Pages[i].images;
+			++index;
+		}
+
+		Pages[i].imageNames.clear();
+		Pages[i].imageNames.resize(Pages[i].images);
+		Pages[i].imageRect.clear();
+		Pages[i].imageRect.resize(Pages[i].images);
+
+	} // End for( int i = 0; i < numberOfPages; i++ ){
 	return;
 }// End countFormatBlocks
 
@@ -489,7 +581,7 @@ void ViewDW::parseText(){
 	log(L"numberOfPages = %i", numberOfPages);
 
 	countFormatBlocks();
-
+//	bool flag = TRUE;
 // Here we strip off the format blocks and send them to
 // setTextRanges
 	int fbStart(0);
@@ -497,27 +589,49 @@ void ViewDW::parseText(){
 	for( int i = 0; i < numberOfPages; i++ ){
 		fbStart = 0;
 		while( fbStart > -1 ){
+//			flag = TRUE;
 			fbStart = Pages[i].text.find( L"\\", fbStart);	// find fb start
 			if( fbStart == wstring::npos ) { break;}
+//			 Hack to let us have text backslahes in our Pages[i].text
 			if (Pages[i].text[fbStart + 1] == L'\\')
-			// Hack to let me have text backslahes in our Pages[i].text
 			{
+				log(L"found two backslahes");
 				Pages[i].text.erase(fbStart , 0);
 				++fbStart;
 			}
+			temp.clear();
 
-			fbEnd = Pages[i].text.find( L" ", fbStart);
+
+		//	if (Pages[i].text[fbStart + 1 ] == L'\\')// &&
+		//	{
+
+		////		log(L"found two backslahes");
+		////		Pages[i].text.replace(fbStart-1, 0);
+		//		temp.append(Pages[i].text, fbStart, 10);
+		//		log(temp);
+		//		temp.clear();
+		//		Pages[i].text.erase(fbStart  , 1);
+		//		temp.append(Pages[i].text, fbStart, 10);
+		//		log(temp);
+		//		++fbStart;
+		//		flag = FALSE;
+		//
+		//	}
+
+//			if (flag) {
+			fbEnd = Pages[i].text.find(L" ", fbStart);
 			fbChange.clear();
-			fbChange.append( Pages[i].text, fbStart, fbEnd - fbStart );
-			log(fbChange);
-			if( fbStart  >= 0 && fbEnd >= 1 )
-				{
-				if( Pages[i].text.size() >  fbEnd  + 1 )
-					Pages[i].text.erase( fbStart, fbEnd - fbStart + 1 );
-				}
-			setTextRanges( i, fbStart );	
-		} // end while(
-	} // end for i loop
+			fbChange.append(Pages[i].text, fbStart, fbEnd - fbStart);
+		//	log(fbChange);
+			if (fbStart >= 0 && fbEnd >= 1)
+			{
+				if (Pages[i].text.size() > fbEnd + 1)
+					Pages[i].text.erase(fbStart, fbEnd - fbStart + 1);
+			}
+			setTextRanges(i, fbStart);
+//			}// End if (flag)
+		} // End while(
+	} // End for i loop
 	return;
 }// End void ViewDW::parseText(){
 
@@ -661,6 +775,34 @@ void ViewDW::setTextRanges(int pageIndex, int wordIndex){
 			}
 		}
 	}
+
+// --------------------- Images  ----------------------
+
+	static int imageCount(0);
+	if (Pages[pageIndex].images > 0) {
+		fbIndex = fbChange.find(L"\\c");
+		if (fbIndex != wstring::npos) {
+			Pages[pageIndex].imageNames[imageCount].append(fbChange, 2, fbChange.size() - 14);
+			log(Pages[pageIndex].imageNames[imageCount]);
+			temp.clear();
+			temp.append(fbChange, fbChange.size() - 12, 3);
+			Pages[pageIndex].imageRect[imageCount].left = stof(temp);
+	//		log(L"Pages[pageIndex].imageRect[imageCount].left = %f", Pages[pageIndex].imageRect[imageCount].left);
+			temp.clear();
+			temp.append(fbChange, fbChange.size() - 9, 3);
+			Pages[pageIndex].imageRect[imageCount].top = stof(temp);
+			temp.clear();
+			temp.append(fbChange, fbChange.size() - 6, 3);
+			Pages[pageIndex].imageRect[imageCount].right = stof(temp);
+			temp.clear();
+			temp.append(fbChange, fbChange.size() - 6, 3);
+			Pages[pageIndex].imageRect[imageCount].bottom = stof(temp);
+			++imageCount;
+			if (imageCount == Pages[pageIndex].images) imageCount = 0;
+		}
+	}
+
+
 	return;
 } // End setTextState
 
@@ -715,9 +857,11 @@ void ViewDW::setTextLayout(int pageIndex, int side){
 
 // ---------------------  Italics  --------------------
 	for( int i = 0; i < Pages[pageIndex].itals; i++){
-		if( side == constants::LEFT_PAGE ) 
+		if (side == constants::LEFT_PAGE) {
 			pLeftLayout_->SetFontStyle(DWRITE_FONT_STYLE_ITALIC,
 				Pages[pageIndex].italRange[i]);
+			pLeftLayout_->SetDrawingEffect(pRedBrush_, Pages[pageIndex].italRange[i]);
+		}
 		else if( side == constants::RIGHT_PAGE ) 
 			pRightLayout_->SetFontStyle(DWRITE_FONT_STYLE_ITALIC,
 				Pages[pageIndex].italRange[i]);
@@ -752,12 +896,19 @@ void ViewDW::setTextLayout(int pageIndex, int side){
 // ---------------------  Sizes  --------------------
 	for( int i = 0; i < Pages[pageIndex].sizes; i++){
 		if( side == constants::LEFT_PAGE ) 
-			pLeftLayout_->SetFontSize(1.25*Pages[pageIndex].fontSizes[i],
+			//pLeftLayout_->SetFontSize(1.25*Pages[pageIndex].fontSizes[i],
+			//	Pages[pageIndex].fontSizeRange[i]);
+
+			pLeftLayout_->SetFontSize(fontSizeFactor*Pages[pageIndex].fontSizes[i],
 				Pages[pageIndex].fontSizeRange[i]);
 		if( side == constants::RIGHT_PAGE ) 
-			pRightLayout_->SetFontSize(1.25*Pages[pageIndex].fontSizes[i],
-				Pages[pageIndex].fontSizeRange[i]);
+			//pRightLayout_->SetFontSize(1.25*Pages[pageIndex].fontSizes[i],
+			//	Pages[pageIndex].fontSizeRange[i]);
+
+		pRightLayout_->SetFontSize(fontSizeFactor*Pages[pageIndex].fontSizes[i],
+			Pages[pageIndex].fontSizeRange[i]);
 	}
+
 	return;
 }
 
@@ -789,11 +940,25 @@ void ViewDW::getChar( WPARAM charCode){
 			bDrawMenu = TRUE;
 			bPageMenu = FALSE;
 			bMainMenu = TRUE;
+
+			// If we are in gL_gL mode dwWin has zero size and
+			// InvalidateRect won't send WM_PAINT to dwWin.
+			// We need to give dwWin some size so windows will
+			// send WM_PAINT to it.
+
+			if (Pages[pageNumber].mode == constants::gL_gL &&
+				Pages[newPageNumber].mode != constants::gL_gL)
+			SendMessage(mainHandle, WM_SIZE, Pages[newPageNumber].mode, newPageNumber);
+
+
 			if( newPageNumber > -1 )
 			{
 				pageNumber = newPageNumber;
 				newPageNumber = -1;
 			}
+
+//			if (Pages[pageNumber].mode == constants::gL_gL) return;
+ 
 			setMenuText(newPageNumber);
 			InvalidateRect( dwHandle, NULL, FALSE );
 			return;
@@ -841,7 +1006,7 @@ void ViewDW::drawMenu(float windowWidth ) {
 	DWRITE_TEXT_RANGE tRange = {0};
 	float fontSize = 0.0f;
 	menuCellWidth = windowWidth/static_cast<float>(constants::menuCells + 0.2f );
-	log(L"ViewDW::drawMenu(cellWidth = %f)", menuCellWidth);
+//	log(L"ViewDW::drawMenu(cellWidth = %f)", menuCellWidth);
 	if (windowWidth < 954 )
 		fontSize = windowWidth*constants::menuFontScaleFactor;
 	else fontSize = 19.0f;
@@ -872,7 +1037,7 @@ HRESULT ViewDW::CreateDeviceResources()
 #endif
     HRESULT hr = S_OK;
 	if(!pRT_){
-//		int mode;
+
 		RECT rc;
 		GetClientRect(dwHandle, &rc);
 		D2D1_SIZE_U Usize = D2D1::SizeU((rc.right - rc.left ),
@@ -880,24 +1045,10 @@ HRESULT ViewDW::CreateDeviceResources()
 		hr = pD2DFactory_->CreateHwndRenderTarget( 
 			D2D1::RenderTargetProperties(),
 			D2D1::HwndRenderTargetProperties( dwHandle, Usize ), &pRT_ );
-//		mode = pRT_->GetTextAntialiasMode();
-//			log(L"ViewDW::CreateDeviceResources() mode = %i", mode);
-//		pRT_->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
-//		pRT_->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_FORCE_DWORD);
-
-//		mode = pRT_->GetTextAntialiasMode();
-//		log(L"ViewDW::CreateDeviceResources() mode = %i", mode);
-		//typedef enum D2D1_TEXT_ANTIALIAS_MODE {
-		//	D2D1_TEXT_ANTIALIAS_MODE_DEFAULT,
-		//	D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE,
-		//	D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE,
-		//	D2D1_TEXT_ANTIALIAS_MODE_ALIASED,
-		//	D2D1_TEXT_ANTIALIAS_MODE_FORCE_DWORD
-		//};
+		pRT_->CreateSolidColorBrush(D2D1::ColorF(0xFF0000), &pRedBrush_);
 		pRT_->CreateSolidColorBrush(constants::paperColor, &pPaperBrush_ ); 
 		pRT_->CreateSolidColorBrush(D2D1::ColorF(0xF4B480),  &pBookTextBrush_ );
 		pRT_->CreateSolidColorBrush(constants::menuTextColor,  &pMenuBrush_ );
-
 	}
 
 	if( FAILED( hr )) return hr;
@@ -913,52 +1064,56 @@ log(L"ViewDW::setPageSize(int pageNumber) = %i", pageNumber);
 	// check for a dangling pointer 12-12-18
 	if( pRT_ ) rtSize = pRT_->GetSize();
 	else{
-//		log(L"ViewDW::setPageSize if( pRT_ ) returned false");
+		log(L"ViewDW::setPageSize if( pRT_ ) returned false");
 		return;
 	}
- //   if (pRT_){		
-	//	if(FAILED( pRT_->GetSize())){
-	//		DiscardDeviceResources();
-	//		log(L"FAILED( pRT_->Resize");
-	//		return; 
-	//	}
-	//}
 
+	pageArea = rtSize.width*rtSize.height;
+	imageScale.height = rtSize.height / maxClientSize.height;
 	paperRect.right = rtSize.width; paperRect.bottom = rtSize.height;
 
-	if( Pages[pageNumber].mode == constants::gL_gL ){
-//		log(L"Pages[pageNumber].mode = constants::gL_gL");
-		viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
-		return;}
+	if (Pages[pageNumber].mode == constants::dW_gL)
+	{
+		// Scale font to window size
+		fontSizeFactor = 1.25f*sqrt(2.0f*(pageArea / maxClientArea));
+		imageScale.width = 2.0f*rtSize.width / maxClientSize.width;
+		// Tell viewGL to display the palette
+		if (bColorMenu) viewGL->hello_From_DW(constants::PALETTE);
+		else viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
+		if (rtSize.width > 2.0f*constants::pageMargin)
+			fpageWidth = rtSize.width - 2.0f*constants::pageMargin;
+		else  fpageWidth = rtSize.width;
+
+		if (rtSize.height > 2 * constants::pageMargin)
+			fpageHeight = rtSize.height - 2.0f*constants::pageMargin;
+		else  fpageHeight = rtSize.height;
+		return;
+	}
 
 	if( Pages[pageNumber].mode == constants::dW_dW )
 	{  
-//		log(L"Pages[pageNumber].mode = constants::dW_dW");
+		// Scale font to window size
+		fontSizeFactor = 1.25f*sqrt(pageArea/maxClientArea);
+		imageScale.width = rtSize.width / maxClientSize.width;
+
 		// Do not allow fpageWidth or fpageHeight to go negative  < 1  !!
 		if( rtSize.width  > 3*constants::pageMargin )
-			fpageWidth = rtSize.width/2.0f - 1.5f*constants::pageMargin;
+			fpageWidth = rtSize.width/2.0f - 1.5f*constants::pageMargin;  
 		else  fpageWidth = rtSize.width;  
 
 		if( rtSize.height > 2*constants::pageMargin )
 			fpageHeight = rtSize.height - 2.0f*constants::pageMargin;
 		else  fpageHeight = rtSize.height;
 		viewGL->hello_From_DW(-1);
+		return;
 	}
 
-	else if( Pages[pageNumber].mode == constants::dW_gL )
-	{
-//		log(L"Pages[pageNumber].mode = constants::dW_gL");
-		// Tell viewGL to display the palette
-		if (bColorMenu) viewGL->hello_From_DW(constants::PALETTE);
-		else viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
-		if( rtSize.width > 2.0f*constants::pageMargin )
-			fpageWidth = rtSize.width - 2.0f*constants::pageMargin;
-		else  fpageWidth = rtSize.width;
-
-		if( rtSize.height > 2*constants::pageMargin ) 
-			fpageHeight = rtSize.height - 2.0f*constants::pageMargin;
-		else  fpageHeight = rtSize.height; 	
+	if (Pages[pageNumber].mode == constants::gL_gL) {
+		//		log(L"Pages[pageNumber].mode = constants::gL_gL");
+		viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
+		return;
 	}
+
 	return;
 }
 
@@ -1046,6 +1201,53 @@ log(L"ViewDW::drawPageNumber(int pageNumber, int side) ");
 	return;
 }
 
+// Pages with image formatting Ex: \cReneDescartes.jpg120320000000 will call
+// drawPageImages.
+// Decoding the format: 120320000000  ->  120    320    000    000
+// will put the upper left corner of the image 120 pix from the left side of the
+// page and 320 pix down from the top of the page.
+// The last two, three digit blocks are read into Pages[pageNumber].imageRect[i] 
+// Which set the width (imageRect[i].right) and height (imageRect[i].bottom)  
+// of the image.  If both (imageRect[i].right) and height (imageRect[i].bottom) = 0,  
+// LoadBitmapFromFile will return the width of the image given in the image file in m_pBitmap.
+// If values are specified in the format block, Ex: 120 320 300 400 ;
+// Then LoadBitmapFromFile will scale the file image to 300 wide x 400 high.
+//
+// Scaling the image to page size
+// D2D1_SIZE_F imageScale is set in ViewDW::setPageSize 
+//
+void ViewDW::drawPageImages(int pageNumber, int side) {
+#ifdef DEBUG_GB
+	log(L"ViewDW::drawPageImages(int pageNumber, int side) ");
+#endif
+
+	for (int i = 0; i < Pages[pageNumber].images; i++) 
+	{
+//		log(Pages[pageNumber].imageNames[i]);
+		imageFilePathName.clear();
+		imageFilePathName = dwConst::imageFilePath;
+		imageFilePathName = imageFilePathName.append(Pages[pageNumber].imageNames[i]);
+//		log(imageFilePathName);
+		LoadBitmapFromFile(pRT_, m_pWICFactory,
+			(PWSTR)imageFilePathName.c_str(),
+			static_cast<int>(Pages[pageNumber].imageRect[i].right),
+			static_cast<int>(Pages[pageNumber].imageRect[i].bottom),
+			&m_pBitmap);
+
+		D2D1_SIZE_F bmSize = m_pBitmap->GetSize();
+
+		float width;
+		if (side == constants::RIGHT_PAGE) width = fpageWidth + constants::pageMargin;
+		else width = 0.0f;
+
+		pRT_->DrawBitmap(m_pBitmap, D2D1::RectF(width +
+			imageScale.width*Pages[pageNumber].imageRect[i].left,
+			imageScale.height*Pages[pageNumber].imageRect[i].top,
+			width + imageScale.width*(Pages[pageNumber].imageRect[i].left + bmSize.width),
+			imageScale.height*(Pages[pageNumber].imageRect[i].top + bmSize.height)));
+	}
+}
+
 // Invoke DW's DrawText and DrawTextLayout to put our text
 // on the display.
 void ViewDW::drawDW(){
@@ -1055,10 +1257,13 @@ log(L"ViewDW::drawDW() ");
 										//WPARAM wParam,   LPARAM lParam
 	SendMessage( mainHandle, WM_SIZE, Pages[pageNumber].mode,  pageNumber );
 
-	if (SUCCEEDED( CreateDeviceResources()) )
-	{ 	
+	if (SUCCEEDED(CreateDeviceResources()))
+	{
+		HRESULT hr = S_OK;
 		setPageSize(pageNumber);
 		setLeftRightLayout(pageNumber);
+
+		SafeRelease(&m_pBitmap);
 
 		pRT_->BeginDraw(); 
 
@@ -1079,6 +1284,7 @@ log(L"ViewDW::drawDW() ");
 				Pages[pageNumber].mode == constants::dW_gL )
 			{
 				drawPageNumber(pageNumber, constants::LEFT_PAGE);
+				if (Pages[pageNumber].images) drawPageImages(pageNumber, constants::LEFT_PAGE);
 				pRT_->DrawTextLayout( leftPageOrigin, pLeftLayout_, pBookTextBrush_ );
 			}
 			if( Pages[pageNumber].mode == constants::dW_dW)
@@ -1087,7 +1293,8 @@ log(L"ViewDW::drawDW() ");
 					Pages[pageNumber + 1 ].mode != constants::gL_gL)
 				{
 					drawPageNumber(pageNumber + 1, constants::RIGHT_PAGE);
-					rightPageOrigin.x = fpageWidth  +  2.0f*constants::pageMargin;
+					rightPageOrigin.x = fpageWidth + 2.0f*constants::pageMargin;
+					if (Pages[pageNumber + 1].images) drawPageImages(pageNumber + 1, constants::RIGHT_PAGE);
 					pRT_->DrawTextLayout( rightPageOrigin, pRightLayout_, pBookTextBrush_ );
 				}
 			}
@@ -1101,21 +1308,9 @@ log(L"ViewDW::drawDW() ");
 // Set iMenuCell = menu item if mouse in the menu rectangle.
 void ViewDW::setMenuCell(int x, int y){
 
-	//if( y > 2 && y < constants::menuHeight && 
-	//	x < (dwWidth - 5) && x > 0 )
-	//{
-	//	float menuCellWidth = ((float)dwWidth/(float)constants::menuCells);  			
-	//	if( x < menuCellWidth ) iMenuCell = -1;
-	//	else iMenuCell = (x/menuCellWidth) -1;
-	//}
-	//else iMenuCell = -1;
-
-//	menuCellWidth = ((float)dwWidth / (float)constants::menuCells);
-
 	if (y > 2 && y < constants::menuHeight &&
 		x < (dwWidth - 5) && x > 0)
 	{
-//		float menuCellWidth = ((float)dwWidth / (float)constants::menuCells);
 		if (x < 5) { iMenuCell = -1; return; }
 		else { iMenuCell = (x / menuCellWidth); return; }
 	}
@@ -1137,6 +1332,7 @@ int ViewDW::mouseMove( int x, int y ){
 	// to call drawMenu() in drawDW(). 
 	if( iMenuCell > -1  )
 	{
+//		log(L"ViewDW::mouseMove iMenuCell > -1");
 		bDrawMenu = TRUE;
 		InvalidateRect( dwHandle, NULL, FALSE );
 		return 0;
@@ -1164,9 +1360,9 @@ void ViewDW::keyDown(int key, LPARAM lParam){
 	if( bMainMenu )
 	{
 		if( key == VK_DOWN || key == VK_NEXT)
-		{ lButtonDown(0, 0, constants::NEXT); return; }
+		{ lButtonDown(-1, 0, constants::NEXT); return; }
 		if( key == VK_UP || key == VK_PRIOR)
-		{ lButtonDown(0, 0, constants::PRIOR); return; }
+		{ lButtonDown(-1, 0, constants::PRIOR); return; }
 		if( key == VK_END )
 		{ lButtonDown(0, 0, constants::END); return; }
 		if( key == VK_HOME )
@@ -1189,6 +1385,30 @@ void ViewDW::keyDown(int key, LPARAM lParam){
 	}
 	return;
 }
+
+
+void ViewDW::Display(glm::vec4* color) {
+//	log(L"ViewDW::lButtonDown(int x = %i , int y = %i, item = %i)", x, y, item);
+	//	Win::log(L"color.rgba =  %f  %f  %f  %f", color.r, color.g, color.b, color.a);
+//	float colorFromGL = *color;
+
+	glm::vec4 colorFromGL = *color;
+
+//	Win::log(L"ViewDW::Display colorFromGL =  %f  ", colorFromGL);
+
+	Win::log(L"ViewDW::Display colorFromGL =  %f  ", colorFromGL.r);
+}
+
+//void ViewDW::Wrapper_To_Call_Display(void* pt2Object, float* color) {
+void ViewDW::Wrapper_To_Call_Display(void* pt2Object, glm::vec4* color) {
+
+	// explicitly cast to a pointer to ViewDW
+	ViewDW* mySelf = (ViewDW*)pt2Object;
+
+	// call member
+	mySelf->Display(color);
+}
+
 // We use this for mouse clicks and keyboard shortcuts for the 
 // same menu items as the mouse menu. If item == -1 its a mouse click
 // if its from the keys item will be the iMenuCell for the item
@@ -1253,16 +1473,34 @@ int ViewDW::lButtonDown(int x, int y, int item){
 		//  Handle Page Requests 
 		if( iMenuCell == constants::PRIOR && pageNumber > 0)
 		{
+
+			--pageNumber;
+
+			if (Pages[pageNumber + 1].mode == constants::gL_gL &&
+				Pages[pageNumber].mode == constants::gL_gL) {
+				viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
+				// We are going from a gL_gL mode window to a gL_gL mode window:
+				// This is all openGL rendering no need to InvalidateRect 
+				return 0;
+			}
+
 			// If we are in gL_gL mode; InvalidateRect won't send
 			// WM_PAINT to dwWin, we need to give it some size 
-			// so windows will send this msg to it.
-			--pageNumber;
-			if(	Pages[pageNumber + 1].mode == constants::gL_gL &&
-				Pages[pageNumber].mode != constants::gL_gL)
-				SendMessage( mainHandle, WM_SIZE, Pages[pageNumber].mode,  pageNumber );
-			if (item == -1) bDrawMenu = TRUE;
+			// so windows will send WM_PAINT to it.
+
+			if (Pages[pageNumber + 1].mode == constants::gL_gL &&
+				Pages[pageNumber].mode != constants::gL_gL) 
+			{
+				// get the cursor out of what will be the dwWin 
+				moveTheCursor();
+				SendMessage(mainHandle, WM_SIZE, Pages[pageNumber].mode, pageNumber);
+			}
+			// This is from the mouse, so the mouse is prob in the menu
+			if (item == -1 ) bDrawMenu = TRUE;
+
+			// This is from the KB so don't draw the menu
 			else bDrawMenu = FALSE;
-			//log(L"ViewDW::lButtonDown(pageNumber = %i )", pageNumber);
+			log(L"ViewDW::lButtonDown(iMenuCell == constants::PRIOR)");
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
@@ -1270,14 +1508,27 @@ int ViewDW::lButtonDown(int x, int y, int item){
 		if( iMenuCell == constants::NEXT && pageNumber < numberOfPages - 1)	   {
 			// If we are in gL_gL,]; InvalidateRect won't send
 			// WM_PAINT to dwWin, we need to give it some size
-			// so windows will send this msg to it.
+			// so windows will send WM_PAINT to it.
 			++pageNumber;
-			if(	Pages[pageNumber - 1].mode == constants::gL_gL &&
-				Pages[pageNumber].mode != constants::gL_gL)
-				SendMessage( mainHandle, WM_SIZE, Pages[pageNumber].mode,  pageNumber );
-			if( item == -1 ) bDrawMenu = TRUE;
+			if (Pages[pageNumber - 1].mode == constants::gL_gL &&
+				Pages[pageNumber].mode == constants::gL_gL) {
+				viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
+				bDrawMenu = FALSE;
+				return 0;
+			}
+
+			if (Pages[pageNumber - 1].mode == constants::gL_gL &&
+				Pages[pageNumber].mode != constants::gL_gL) {
+				// get the cursor out of what will be the dwWin 
+				moveTheCursor();
+				SendMessage(mainHandle, WM_SIZE, Pages[pageNumber].mode, pageNumber);
+			}
+
+			// This is from the mouse, so the mouse is prob in the menu
+			if (item == -1) bDrawMenu = TRUE;
+
+			// This is from the KB so don't draw the menu
 			else bDrawMenu = FALSE;
-			//log(L"ViewDW::lButtonDown(pageNumber = %i )", pageNumber);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
@@ -1286,10 +1537,12 @@ int ViewDW::lButtonDown(int x, int y, int item){
 		{   			
 			// If we are in gL_gL,]; InvalidateRect won't send
 			// WM_PAINT to dwWin, we need to give it some size
-			// so windows will send this msg to it.
+			// so windows will send WM_PAINT to it.
 			if(	Pages[pageNumber].mode == constants::gL_gL &&
 				Pages[0].mode != constants::gL_gL)
 			{
+				// get the cursor out of what will be the dwWin 
+				moveTheCursor();
 				pageNumber = 0;
 				SendMessage( mainHandle, WM_SIZE, Pages[pageNumber].mode,  pageNumber );
 			}
@@ -1303,10 +1556,12 @@ int ViewDW::lButtonDown(int x, int y, int item){
 		{
 			// If we are in gL_gL,]; InvalidateRect won't send
 			// WM_PAINT to dwWin, we need to give it some size
-			// so windows will send this msg to it.
+			// so windows will send WM_PAINT to it.
 			if(	Pages[pageNumber].mode == constants::gL_gL &&
 				Pages[tableOfContents].mode != constants::gL_gL)
 			{
+				//  dwWin is zero size  the cursor out of what will be the dwWin on resize
+				moveTheCursor();
 				pageNumber = tableOfContents;
 				SendMessage( mainHandle, WM_SIZE, Pages[pageNumber].mode,  pageNumber );
 			}
@@ -1321,6 +1576,8 @@ int ViewDW::lButtonDown(int x, int y, int item){
 			if(	Pages[pageNumber].mode == constants::gL_gL &&
 				Pages[indexPage].mode != constants::gL_gL)
 			{
+				// get the cursor out of what will be the dwWin 
+				moveTheCursor();
 				pageNumber = indexPage;
 				SendMessage( mainHandle, WM_SIZE, Pages[pageNumber].mode,  pageNumber );
 			}
@@ -1335,6 +1592,8 @@ int ViewDW::lButtonDown(int x, int y, int item){
 			if(	Pages[pageNumber].mode == constants::gL_gL &&
 				Pages[numberOfPages - 1].mode != constants::gL_gL)
 			{
+				// get the cursor out of what will be the dwWin 
+				moveTheCursor();
 				pageNumber = numberOfPages - 1;
 				SendMessage( mainHandle, WM_SIZE, Pages[pageNumber].mode,  pageNumber );
 			}
@@ -1369,10 +1628,18 @@ int ViewDW::lButtonDown(int x, int y, int item){
 		InvalidateRect(dwHandle, NULL, FALSE);
 		return 0;
 	}
-
 	return 0;
 } // End lButtonDown(...
 
+void ViewDW::moveTheCursor(){
+
+	RECT clientRect;
+	POINT pt;
+	::GetClientRect(mainHandle, &clientRect);
+	pt.x = clientRect.right; pt.y = clientRect.bottom;
+	ClientToScreen(mainHandle, &pt);
+	SetCursorPos(pt.x, pt.x);
+}
 
 int ViewDW::size( int width, int height ){
 #ifdef DEBUG_GB
@@ -1472,4 +1739,119 @@ void ViewDW::setMenuText( int parameter )
 		return;
 	}
 	return;
+}
+
+
+HRESULT ViewDW::LoadBitmapFromFile(
+	ID2D1RenderTarget *pRenderTarget,
+	IWICImagingFactory *pIWICFactory,
+	PCWSTR uri,
+	UINT destinationWidth,
+	UINT destinationHeight,
+	ID2D1Bitmap **ppBitmap)
+{
+#ifdef DEBUG_GB
+	log(L"ViewDW::LoadBitmapFromFile( )");
+#endif
+	IWICBitmapDecoder *pDecoder = NULL;
+	IWICBitmapFrameDecode *pSource = NULL;
+	IWICStream *pStream = NULL;
+	IWICFormatConverter *pConverter = NULL;
+	IWICBitmapScaler *pScaler = NULL;
+
+	HRESULT hr = pIWICFactory->CreateDecoderFromFilename(
+		uri,
+		NULL,
+		GENERIC_READ,
+		WICDecodeMetadataCacheOnLoad,
+		&pDecoder
+	);
+
+	if (SUCCEEDED(hr))
+	{
+		// Create the initial frame.
+		hr = pDecoder->GetFrame(0, &pSource);
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		// Convert the image format to 32bppPBGRA
+		// (DXGI_FORMAT_B8G8R8A8_UNORM + 		D2D1_ALPHA_MODE_PREMULTIPLIED).
+		hr = pIWICFactory->CreateFormatConverter(&pConverter);
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		// If a new width or height was specified, create an
+		// IWICBitmapScaler and use it to resize the image.
+		if (destinationWidth != 0 || destinationHeight != 0)
+		{
+			UINT originalWidth, originalHeight;
+			hr = pSource->GetSize(&originalWidth, &originalHeight);
+			if (SUCCEEDED(hr))
+			{
+				if (destinationWidth == 0)
+				{
+					FLOAT scalar = static_cast<FLOAT> (destinationHeight) / static_cast<FLOAT>(originalHeight);
+					destinationWidth = static_cast<UINT>(scalar *static_cast<FLOAT>(originalWidth));
+				}
+				else if (destinationHeight == 0)
+				{
+					FLOAT scalar = static_cast<FLOAT> (destinationWidth) / static_cast<FLOAT>(originalWidth);
+					destinationHeight = static_cast<UINT>(scalar *static_cast<FLOAT>(originalHeight));
+				}
+
+				hr = pIWICFactory->CreateBitmapScaler(&pScaler);
+				if (SUCCEEDED(hr))
+				{
+					hr = pScaler->Initialize(
+						pSource,
+						destinationWidth,
+						destinationHeight,
+						WICBitmapInterpolationModeCubic
+					);
+				}
+				if (SUCCEEDED(hr))
+				{
+					hr = pConverter->Initialize(
+						pScaler,
+						GUID_WICPixelFormat32bppPBGRA,
+						WICBitmapDitherTypeNone,
+						NULL,
+						0.f,
+						WICBitmapPaletteTypeMedianCut
+					);
+				}
+			}
+		}
+		else // Don't scale the image.
+		{
+			hr = pConverter->Initialize(
+				pSource,
+				GUID_WICPixelFormat32bppPBGRA,
+				WICBitmapDitherTypeNone,
+				NULL,
+				0.f,
+				WICBitmapPaletteTypeMedianCut
+			);
+		}
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		// Create a Direct2D bitmap from the WIC bitmap.
+		hr = pRenderTarget->CreateBitmapFromWicBitmap(
+			pConverter,
+			NULL,
+			ppBitmap
+		);
+	}
+
+	SafeRelease(&pDecoder);
+	SafeRelease(&pSource);
+	SafeRelease(&pStream);
+	SafeRelease(&pConverter);
+	SafeRelease(&pScaler);
+
+	return hr;
 }

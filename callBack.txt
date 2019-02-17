@@ -1,0 +1,24 @@
+ViewGL::Callback()
+{
+   ViewDW objA;
+   DoStuff((void*)&objA, ViewDW::Wrapper_To_Call_Display);
+}
+
+ViewGL::DoStuff(void* pt2Object,
+	 void(*pt2Function)(void* pt2Object, glm::vec4* color))
+(
+	pt2Function(pt2Object, &paletteColor);
+)
+
+
+
+ViewDW::Wrapper_To_Call_Display(void* pt2Object, glm::vec4* color) {
+
+	// explicitly cast to a pointer to ViewDW
+	ViewDW* mySelf = (ViewDW*)pt2Object;
+
+	// call member
+	mySelf->Display(color);
+}
+
+

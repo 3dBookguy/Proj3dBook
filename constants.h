@@ -64,6 +64,8 @@ namespace constants
 
 	// Used to scale font to window width
 	const float menuFontScaleFactor(0.02f);
+
+
 	// Brush colors
 	const D2D1::ColorF paperColor(0x0);
 	const D2D1::ColorF menuTextColor(0xa06020);

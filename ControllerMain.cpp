@@ -11,7 +11,6 @@
 #include <sstream>
 #include "ControllerMain.h"
 
-
 #include "resource.h"
 #include "Log.h"
 #define DEBUG_GB
@@ -37,7 +36,7 @@ glWidth(0)
 
 int ControllerMain::keyDown(int key, LPARAM lParam){
 	log(L"ControllerMain::keyDown( key = %i LOWORD = %i HIWORD = %i)", key, LOWORD(lParam),  HIWORD(lParam));
-
+	ctrlGL->keyDown(key, lParam);
 	ctrlDW->keyDown(key, lParam);
 	return 0;
 }

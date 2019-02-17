@@ -30,6 +30,7 @@ namespace Win
 	//	bool hookupShaders();
         int paint();
         int size(int w, int h, WPARAM wParam);
+		int keyDown(int key, LPARAM lParam);
         int lButtonDown(WPARAM state, int x, int y);
         int lButtonUp(WPARAM state, int x, int y);
         int rButtonDown(WPARAM state, int x, int y);

@@ -13,13 +13,69 @@ Handles calls from ViewGL for rendering data.
 
 using namespace Win;
 
-ModelGL::ModelGL() {}
+
+ModelGL::ModelGL()
+{ 
+	Mem.xAngle = Mem.yAngle = Mem.zAngle = 0.0f;
+	Mem.rotSpeed = 0.01f;
+	Mem.size.x = Mem.size.y = Mem.size.z = 1.0f;
+	Mem.sizeM = glm::mat4(1.0f);
+	Mem.xRot = glm::mat4(1.0f);
+	Mem.yRot = glm::mat4(1.0f);	
+	Mem.zRot == glm::mat4(1.0f);
+}
+
+
+//  Rotate - scale model using keyboard input 
+void ModelGL::rotateParams(int key) {
+
+	if( key == 'D' || key == 'A' )
+	{ 
+		if( key == 'D' ) Mem.xAngle += Mem.rotSpeed;
+		else Mem.xAngle -= Mem.rotSpeed;
+		if( Mem.xAngle > 2.0f*mConst::pi || Mem.xAngle < -2.0f*mConst::pi ) 
+			Mem.xAngle = 0.0f;
+
+	}
+	else if( key == 'W' || key == 'S' )
+	{
+		if( key == 'W' ) Mem.yAngle += Mem.rotSpeed;
+		else Mem.yAngle -= Mem.rotSpeed;
+		if( Mem.yAngle > 2.0f*mConst::pi || Mem.yAngle < -2.0f*mConst::pi )
+			Mem.yAngle = 0.0f;
+	}
+	else if( key == 'Z' || key == 'X' )
+	{
+		if( key == 'Z' ) Mem.zAngle += Mem.rotSpeed;
+		else Mem.zAngle -= Mem.rotSpeed;
+		if( Mem.zAngle > 2.0f*mConst::pi || Mem.zAngle < -2.0f*mConst::pi )
+			Mem.zAngle = 0.0f;
+	}
+//Note: Enabling swizzle expressions will massively increase
+//the size of your binaries and the time it takes to compile them!
+	else if( key == 'V' || key == 'C' )
+	{
+		if( key == 'V' ) Mem.size.x += Mem.rotSpeed;
+		else Mem.size.x -= Mem.rotSpeed;
+		Mem.size.y = Mem.size.z = Mem.size.x;
+	}
+}
+
+glm::mat4 ModelGL::rotate(){
+
+	Mem.sizeM = glm::scale(glm::mat4(1.0f),  Mem.size);
+	Mem.xRot = glm::rotate(glm::mat4(1.0f), Mem.xAngle, mConst::xaxis);
+	Mem.yRot = glm::rotate(glm::mat4(1.0f), Mem.yAngle, mConst::yaxis);
+	Mem.zRot = glm::rotate(glm::mat4(1.0f), Mem.zAngle, mConst::zaxis);
+
+	return Mem.sizeM*Mem.xRot*Mem.yRot*Mem.zRot;
+}
 
 Point ModelGL::point(float x, float y, float z, float w, float r, float g, float b, float a) {
 
 	Point point;
 	point.xyzw  = glm::vec4( x,  y,  z,  w );
-	point.color = glm::vec4( r, b, g, a);
+	point.rgba = glm::vec4( r, b, g, a);
 	return point;
 }
 
@@ -36,7 +92,7 @@ void ModelGL::exampleTri(Triangle &triVerts) {
 	triVerts.p[0].xyzw = glm::vec4(-0.5f, -0.33f, 0.0f, 1.0f);
 	triVerts.p[1].xyzw = glm::vec4( 0.0f,  0.5f,  0.0f, 1.0f);
 	triVerts.p[2].xyzw = glm::vec4( 0.5f, -0.33f, 0.0f, 1.0f);
-
+	triVerts.p[0].rgba = triVerts.p[1].rgba = triVerts.p[2].rgba = glm::vec4( 0.3f, 0.2f, 0.9f, 1.0f);
 }
 
 void ModelGL::exampleSubData(Triangle(&triVerts)[2]) {
@@ -60,9 +116,27 @@ Triangle ModelGL::triangle(Point A, Point B, Point C) {
 
 	return triangle;
 }
+void ModelGL::rgbTriAxis(Line(&axes)[3])
+{
+
+	axes[0].p[0].xyzw = mConst::origin4v;
+	axes[1].p[0].xyzw = mConst::origin4v;
+	axes[2].p[0].xyzw = mConst::origin4v;
+
+	axes[0].p[1].xyzw = glm::vec4(mConst::xaxis, 1.0f);
+	axes[1].p[1].xyzw = glm::vec4(mConst::yaxis, 1.0f);
+	axes[2].p[1].xyzw = glm::vec4(mConst::zaxis, 1.0f);
+
+	axes[0].p[0].rgba = axes[0].p[1].rgba = mConst::red;
+	axes[1].p[0].rgba = axes[1].p[1].rgba = mConst::green;
+//	axes[2].p[0].rgba = axes[2].p[1].rgba = mConst::blue;
+
+	//axes[0].p[0].rgba = axes[0].p[1].rgba = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	//axes[1].p[0].rgba = axes[1].p[1].rgba = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	axes[2].p[0].rgba = axes[2].p[1].rgba = glm::vec4(0.4f, 0.1f, 1.0f, 1.0f);
 
 
- 
+}
 // The palette is a 36 row x 37 column grid which covers GLwin.
 // The verts and colors for the grid are written to 
 // Rectangle(&rect)[1331] which is passed in.  The colors are also 
@@ -100,10 +174,10 @@ void ModelGL::colorPalette(Win::Rectangle(&rect)[1331]){
 				{
 					for (int p = 0; p < 3; p++)
 					{
-						rect[count].T[t].p[p].color.r = red;
-						rect[count].T[t].p[p].color.g = green;
-						rect[count].T[t].p[p].color.b = blue;
-						rect[count].T[t].p[p].color.a = 1.0f;
+						rect[count].T[t].p[p].rgba.r = red;
+						rect[count].T[t].p[p].rgba.g = green;
+						rect[count].T[t].p[p].rgba.b = blue;
+						rect[count].T[t].p[p].rgba.a = 1.0f;
 
 						rect[count].T[t].p[p].xyzw.z = 0.0f;
 						rect[count].T[t].p[p].xyzw.w = 1.0f;
@@ -204,7 +278,7 @@ void ModelGL::returnColor(int x, int y, int w , int h , glm::vec4 &color) {
 void ModelGL::coord_System(Point specs, Line(&axis)[3]) {
 
 	//  specs.xyzw  = glm::vec4(origin.x, origin.w, origin.z, length of axes);
-	//  specs.color = color of axes
+	//  specs.rgba = color of axes
 	//  axis[0] = X axis
 	//  axis[1] = Y axis
 	//  axis[2] = Z axis
@@ -212,7 +286,7 @@ void ModelGL::coord_System(Point specs, Line(&axis)[3]) {
 
 	for (int i = 0; i < 3; i++) {
 
-		axis[i].p[0].color = axis[i].p[1].color = specs.color;
+		axis[i].p[0].rgba = axis[i].p[1].rgba = specs.rgba;
 		axis[i].p[0].xyzw.w = axis[i].p[1].xyzw.w = 1.0f;
 	}
 
@@ -226,51 +300,114 @@ void ModelGL::coord_System(Point specs, Line(&axis)[3]) {
 	axis[2].p[1].xyzw.z = specs.xyzw.w;
 }
 
-// Monochromatic rectangle
-void ModelGL::rectangle(Point rect, Triangle(&tri)[2] ){
+// Creates a prism with the triangular faces in the XY plane.
+// The faces are as shown
+//
+//
+//
+//         /\ T1               Y   -Z
+//        /  \/                |  /
+//       /____\                | /
+//      /\    /                |/
+//     /  \  /                 ----> X 
+//    /____\/
+//      |
+//     T0  
+//
+//       1
+//
+//    0     2
+void ModelGL::prism(Point(&specs)[5], Triangle(&tri)[8]) {
 
-// Set all the color attributes to rect.color.
+
+	//for (int i = 0; i < 2; i++)
+	//{
+	//	for (int j = 0; j < 3; j++)
+	//	{
+	//		glm::vec4 color = specs[i].rgba;
+	//		tri[i].p[j].rgba = color;
+	//	//	tri[i].p[j].rgba = specs[i].rgba;
+	//		Win::log(L"tri[%i].p[%i].rgbd = %f  %f  %f  %f ", i, j, tri[i].p[j].rgba.r,
+	//			tri[i].p[j].rgba.g, tri[i].p[j].rgba.b, tri[i].p[j].rgba.a);
+
+	//		tri[i].p[j].xyzw.w = 1.0f;
+	//	}
+	//}
+
+	tri[0].p[0].xyzw.x = specs[0].xyzw.x;
+	tri[0].p[0].xyzw.y = specs[0].xyzw.y;
+	tri[0].p[0].xyzw.z = specs[0].xyzw.w/2.0f;
+
+	tri[0].p[1].xyzw.x = specs[1].xyzw.x;
+	tri[0].p[1].xyzw.y = specs[1].xyzw.y;
+	tri[0].p[1].xyzw.z = specs[0].xyzw.w/2.0f;
+
+	tri[0].p[2].xyzw.x = specs[2].xyzw.x;
+	tri[0].p[2].xyzw.y = specs[2].xyzw.y;
+	tri[0].p[2].xyzw.z = specs[0].xyzw.w/2.0f;
+
+	tri[1] = tri[0];
+	tri[1].p[0].xyzw.z = -specs[0].xyzw.w/2.0f;
+	tri[1].p[1].xyzw.z = -specs[0].xyzw.w/2.0f;
+	tri[1].p[2].xyzw.z = -specs[0].xyzw.w/2.0f;
+
+	for (int i = 0; i < 2; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			glm::vec4 color = specs[i].rgba;
+			tri[i].p[j].rgba = color;
+			//	tri[i].p[j].rgba = specs[i].rgba;
+			Win::log(L"tri[%i].p[%i].rgbd = %f  %f  %f  %f ", i, j, tri[i].p[j].rgba.r,
+				tri[i].p[j].rgba.g, tri[i].p[j].rgba.b, tri[i].p[j].rgba.a);
+
+			tri[i].p[j].xyzw.w = 1.0f;
+		}
+	}
+
+}
+// Monochromatic rectangle
+void ModelGL::rectangle(Point specs, Triangle(&tri)[2] ){
+
+// Set all the rgba attributes to specs.rgba.
 // Set all the xyzw.w = 1.0f;
 
 	for (int i = 0; i < 2; i++)
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			tri[i].p[j].color = rect.color;
+			tri[i].p[j].rgba = specs.rgba;
 			tri[i].p[j].xyzw.w = 1.0f;
 		}
 	}
+	//       Using  RH CS
+	//
+	//     Orientation of 2 CW triangles             X   Z
+	//            T0        T1                       ^  /
+	//			1 --2         0                      | /
+	//			|  /   .   /  |       . = COM        |/
+	//			0         2   1                      ----> Y 
 
-//       Using  RH CS
-//
-//     Orientation of 2 CW triangles             Y   -Z
-//            T0        T1                       ^  /
-//			1 --2         0                      | /
-//			|  /   .   /  |       . = COM        |/
-//			0         2   1                      ----> X 
+	if (specs.xyzw.z == 0.0f)  // Create rectangle in XY plane.
+	{
+		tri[0].p[0].xyzw.x = -specs.xyzw.x / 2.0f;
+		tri[0].p[0].xyzw.y = -specs.xyzw.y / 2.0f;
+		tri[0].p[0].xyzw.z = specs.xyzw.w;
 
-	if (rect.xyzw.z == 0.0f)  // Create rectangle in XY plane.
-	{   
+		tri[0].p[1].xyzw.x = specs.xyzw.x / 2.0f;
+		tri[0].p[1].xyzw.y = -specs.xyzw.y / 2.0f;
+		tri[0].p[1].xyzw.z = specs.xyzw.w;
 
-		tri[0].p[0].xyzw.x = -rect.xyzw.x / 2.0f;
-		tri[0].p[0].xyzw.y = -rect.xyzw.y / 2.0f;
-		tri[0].p[0].xyzw.z = rect.xyzw.w;
-
-		tri[0].p[1].xyzw.x = -rect.xyzw.x / 2.0f;
-		tri[0].p[1].xyzw.y = rect.xyzw.y / 2.0f;
-		tri[0].p[1].xyzw.z = rect.xyzw.w;
-
-		tri[0].p[2].xyzw.x = rect.xyzw.x / 2.0f;
-		tri[0].p[2].xyzw.y = rect.xyzw.y / 2.0f;
-		tri[0].p[2].xyzw.z = rect.xyzw.w;
+		tri[0].p[2].xyzw.x = specs.xyzw.x / 2.0f;
+		tri[0].p[2].xyzw.y = specs.xyzw.y / 2.0f;
+		tri[0].p[2].xyzw.z = specs.xyzw.w;
 
 		tri[1].p[0] = tri[0].p[2];
 		tri[1].p[1] = -tri[0].p[1];
 
-		tri[1].p[1].xyzw.z = rect.xyzw.w;
+		tri[1].p[1].xyzw.z = specs.xyzw.w;
 
 		tri[1].p[2] = tri[0].p[0];
-
 	}
 
 //     Using  RH CS
@@ -281,26 +418,37 @@ void ModelGL::rectangle(Point rect, Triangle(&tri)[2] ){
 //			|  /   .    / |       . = COM        |/
 //			0          2  1                      ----> Z 
 
-	if (rect.xyzw.x == 0.0f)  // Create rectangle in YZ plane.
+	if (specs.xyzw.x == 0.0f)  // Create rectangle in YZ plane.
 	{
-		tri[0].p[0].xyzw.y = -rect.xyzw.y / 2.0f;
-		tri[0].p[0].xyzw.z = -rect.xyzw.z / 2.0f;
-		tri[0].p[0].xyzw.x = rect.xyzw.w;
+		tri[0].p[0].xyzw.y = -specs.xyzw.y / 2.0f;
+		tri[0].p[0].xyzw.z = -specs.xyzw.z / 2.0f;
+		tri[0].p[0].xyzw.x = specs.xyzw.w;
 
-		tri[0].p[1].xyzw.y = rect.xyzw.y / 2.0f;
-		tri[0].p[1].xyzw.z = -rect.xyzw.z / 2.0f;
-		tri[0].p[1].xyzw.x = rect.xyzw.w;
+		tri[0].p[1].xyzw.y = specs.xyzw.y / 2.0f;
+		tri[0].p[1].xyzw.z = -specs.xyzw.z / 2.0f;
+		tri[0].p[1].xyzw.x = specs.xyzw.w;
 
-		tri[0].p[2].xyzw.y = rect.xyzw.y / 2.0f;
-		tri[0].p[2].xyzw.z = rect.xyzw.z / 2.0f;
-		tri[0].p[2].xyzw.x = rect.xyzw.w;
+		tri[0].p[2].xyzw.y = specs.xyzw.y / 2.0f;
+		tri[0].p[2].xyzw.z = specs.xyzw.z / 2.0f;
+		tri[0].p[2].xyzw.x = specs.xyzw.w;
 
 		tri[1].p[0] = tri[0].p[2];
 
 		tri[1].p[1] = -tri[0].p[1];
-		tri[1].p[1].xyzw.x = rect.xyzw.w;
+		tri[1].p[1].xyzw.x = specs.xyzw.w;
 
 		tri[1].p[2] = tri[0].p[0];
+
+	//	for (int i = 0; i < 2; i++)
+	//	{
+	//		for (int j = 0; j < 3; j++)
+	//		{
+
+	//			log(L"tri[%i].p[%i].xyzw.x = %f y = %f z = %f ", i, j, tri[i].p[j].xyzw.x, 
+	//				tri[i].p[j].xyzw.y, tri[i].p[j].xyzw.z);
+	//			//tri[i].p[j].xyzw.z -= 3.0f;
+	//		}
+	//	}
 	}
 
 	//     Orientation of 2 CW triangles             Z   Y
@@ -309,41 +457,29 @@ void ModelGL::rectangle(Point rect, Triangle(&tri)[2] ){
 	//			|  /   .   /  |       . = COM        |/
 	//			0         2   1                      ----> X 
 
-//	spec.xyzw = glm::vec4(x, 0.0f, z, y / 2.0f);
-	if (rect.xyzw.y == 0.0f)  // Create rectangle in ZX plane.
+
+	if (specs.xyzw.y == 0.0f)  // Create rectangle in ZX plane.
 	{
-		tri[0].p[0].xyzw.z = -rect.xyzw.z / 2.0f;
-		tri[0].p[0].xyzw.x = -rect.xyzw.x / 2.0f;
-		tri[0].p[0].xyzw.y = rect.xyzw.w;
+		tri[0].p[0].xyzw.z = -specs.xyzw.z / 2.0f;
+		tri[0].p[0].xyzw.x = -specs.xyzw.x / 2.0f;
+		tri[0].p[0].xyzw.y = specs.xyzw.w;
 
-		tri[0].p[1].xyzw.z =  rect.xyzw.z / 2.0f;
-		tri[0].p[1].xyzw.x = -rect.xyzw.x / 2.0f;
-		tri[0].p[1].xyzw.y = rect.xyzw.w;
+		tri[0].p[1].xyzw.z =  specs.xyzw.z / 2.0f;
+		tri[0].p[1].xyzw.x = -specs.xyzw.x / 2.0f;
+		tri[0].p[1].xyzw.y = specs.xyzw.w;
 
-		tri[0].p[2].xyzw.z = rect.xyzw.z / 2.0f;
-		tri[0].p[2].xyzw.x = rect.xyzw.x / 2.0f;
-		tri[0].p[2].xyzw.y = rect.xyzw.w;
+		tri[0].p[2].xyzw.z = specs.xyzw.z / 2.0f;
+		tri[0].p[2].xyzw.x = specs.xyzw.x / 2.0f;
+		tri[0].p[2].xyzw.y = specs.xyzw.w;
 
 		tri[1].p[0] = tri[0].p[2];
 		tri[1].p[1] = -tri[0].p[1];
-		tri[1].p[1].xyzw.y = rect.xyzw.w;
+		tri[1].p[1].xyzw.y = specs.xyzw.w;
 
 		tri[1].p[2] = tri[0].p[0];
-
-		//for (int i = 0; i < 2; i++)
-		//{
-		//	for (int j = 0; j < 3; j++)
-		//	{
-
-		//		log(L"tri[%i].p[%i].xyzw.x = %f",i,j, tri[i].p[j].xyzw.x);
-		//		//tri[i].p[j].xyzw.z -= 3.0f;
-		//	}
-		//}
-
 	}
 
-// Restore CW winding order for outside faces.
-	if (rect.xyzw.w < 0.0f)
+	if (specs.xyzw.w > 0.0f )
 	{
 		Point temp{};
 		temp = tri[0].p[0];
@@ -354,11 +490,15 @@ void ModelGL::rectangle(Point rect, Triangle(&tri)[2] ){
 		tri[1].p[0] = tri[1].p[2];
 		tri[1].p[2] = temp;
 	}
+	return;
 }
 
-// rect[6] specifies the dimensions, offset for origin and color 
+// specs[6] specifies the dimensions, offset for origin and rgba 
 // of the 6 faces.  Writes the verts to Triangle(&tri)[12] 
-void ModelGL::box(Point(&rect)[6], Triangle(&tri)[12]) {
+void ModelGL::box(Point(&specs)[6], Triangle(&tri)[12]) {
+
+// log(L" BOX tri[%i].p[%i].xyzw.x = %f", i, j, tri[i].p[j].xyzw.x);
+
 
          //     _________                 Y -Z
          //    / 23(89) /|                | /
@@ -373,15 +513,15 @@ void ModelGL::box(Point(&rect)[6], Triangle(&tri)[12]) {
 
 	Point spec{};
 	Triangle face[2]{};
-	float x = rect[0].xyzw.x;
-	float y = rect[0].xyzw.y;
-	float z = rect[0].xyzw.z;
+	float x = specs[0].xyzw.x;
+	float y = specs[0].xyzw.y;
+	float z = specs[0].xyzw.z;
 //---------------------------------------------------------------
 
 // Do XY front face  T0 T1
 // spec.xyzw = glm::vec4(x, y, 0.0f, offset from xy plane);
 	spec.xyzw = glm::vec4( x, y, 0.0f, z/2.0f);
-	spec.color = rect[0].color;
+	spec.rgba = specs[0].rgba;
 	rectangle(spec, face);
 
 	for (int i = 0; i < 2; i++) tri[i] = face[i];
@@ -389,7 +529,7 @@ void ModelGL::box(Point(&rect)[6], Triangle(&tri)[12]) {
 // Do XY back face  T6  T7
 // spec.xyzw = glm::vec4(x, y, 0.0f, offset from xy plane);
 	spec.xyzw = glm::vec4(x, y, 0.0f, -z/2.0f);
-	spec.color = rect[1].color;
+	spec.rgba = specs[1].rgba;
 	rectangle(spec, face);
 
 	for (int i = 0; i < 2; i++) tri[i + 6] = face[i];
@@ -399,25 +539,17 @@ void ModelGL::box(Point(&rect)[6], Triangle(&tri)[12]) {
 // Do ZX top face  T2 T3
 // spec.xyzw = glm::vec4(x, 0.0f, z, offset from ZX plane);
 	spec.xyzw = glm::vec4(x, 0.0f, z, y / 2.0f);
-	spec.color = rect[2].color;
+	spec.rgba = specs[2].rgba;
 	rectangle(spec, face);
 
 	for (int i = 0; i < 2; i++) tri[i + 2] = face[i];
 
-	for (int i = 0; i < 2; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-
-			log(L" BOX tri[%i].p[%i].xyzw.x = %f", i, j, tri[i].p[j].xyzw.x);
-			//tri[i].p[j].xyzw.z -= 3.0f;
-		}
-	}
+//---------------------------------------------------------------
 
 // Do ZX bottom face  T8 T9
 //	spec.xyzw = glm::vec4(x, 0.0f, z, offset from ZX plane);
 	spec.xyzw = glm::vec4(x, 0.0f, z, -y / 2.0f);
-	spec.color = rect[3].color;
+	spec.rgba = specs[3].rgba;
 	rectangle(spec, face);
 
 	for (int i = 0; i < 2; i++) tri[i + 8] = face[i];
@@ -427,7 +559,7 @@ void ModelGL::box(Point(&rect)[6], Triangle(&tri)[12]) {
 // Do YZ right face  T4 T5
 // spec.xyzw = glm::vec4(0.0f, y, z, offset from YZ plane);
 	spec.xyzw = glm::vec4(0.0f, y, z, x / 2.0f);
-	spec.color = rect[4].color;
+	spec.rgba = specs[4].rgba;
 	rectangle(spec, face);
 
 	for (int i = 0; i < 2; i++) tri[i + 4] = face[i];
@@ -435,7 +567,7 @@ void ModelGL::box(Point(&rect)[6], Triangle(&tri)[12]) {
 // Do YZ left face  T10 T11
 // spec.xyzw = glm::vec4(0.0f, y, z, offset from YZ plane);
 	spec.xyzw = glm::vec4(0.0f, y, z, -x / 2.0f);
-	spec.color = rect[5].color;
+	spec.rgba = specs[5].rgba;
 	rectangle(spec, face);
 
 	for (int i = 0; i < 2; i++) tri[i + 10] = face[i];	
@@ -609,5 +741,94 @@ std::vector<glm::vec4> ModelGL::exampleN(int exampleNumber, int no_Vertices)
 
 	return exampleN;
 }
+/*
+void ModelGL::matricesFromInputs() {
+
+	// glfwGetTime is called only once, the first time this function is called
+	static double lastTime(0.0f); //  = glfwGetTime();
+
+	// Compute time difference between current and last frame
+	double currentTime(0.0f); //  =  glfwGetTime();
+	float deltaTime = float(currentTime - lastTime);
+
+	// Get mouse position
+	double xpos, ypos;
+	//glfwGetCursorPos(window, &xpos, &ypos);
+
+	// Reset mouse position for next frame
+	//glfwSetCursorPos(window, 1024 / 2, 768 / 2);
+
+// these below need to go in a header somwhere
+
+	glm::vec3 position = glm::vec3(0, 0, 5);
+	// Initial horizontal angle : toward -Z
+	float horizontalAngle = 3.14f;
+	// Initial vertical angle : none
+	float verticalAngle = 0.0f;
+	// Initial Field of View
+	float initialFoV = 45.0f;
+
+	float speed = 3.0f; // 3 units / second
+	float mouseSpeed = 0.005f;
+
+// these above  need to go in a header somwhere
+
+	// Compute new orientation
+	// This is zero if mouse is in the      +   0   -
+	horizontalAngle += mouseSpeed * float(1024 / 2 - xpos);
+	verticalAngle += mouseSpeed * float(768 / 2 - ypos);
+
+// Direction : Spherical coordinates to Cartesian coordinates conversion
+// this is the direction in which we are looking.
+	glm::vec3 direction(
+		cos(verticalAngle) * sin(horizontalAngle),
+		sin(verticalAngle),
+		cos(verticalAngle) * cos(horizontalAngle)
+	);
+
+	// Right vector - this is for "up"
+	glm::vec3 right = glm::vec3(
+		sin(horizontalAngle - 3.14f / 2.0f),
+		0,
+		cos(horizontalAngle - 3.14f / 2.0f)
+	);
+
+	// Up vector
+	glm::vec3 up = glm::cross(right, direction);
+
+	// Move forward
+//	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		position += direction * deltaTime * speed;
+//	}
+
+// Move backward
+// if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+	position -= direction * deltaTime * speed;
+//}
+// Strafe right
+//if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+	position += right * deltaTime * speed;
+//}
+// Strafe left
+//if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+	position -= right * deltaTime * speed;
+//}
+
+	float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
+
+	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+//	ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
+	// Camera matrix
+	//ViewMatrix = glm::lookAt(
+	//	position,           // Camera is here
+	//	position + direction, // and looks here : at the same position, plus "direction"
+	//	up                  // Head is up (set to 0,-1,0 to look upside-down)
+//	);
+
+	// For the next frame, the "last time" will be "now"
+//	lastTime = currentTime;
 
 
+
+}
+*/

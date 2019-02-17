@@ -36,6 +36,13 @@ int ControllerGL::create(HWND hwnd){ // handle WM_CREATE
 
 int ControllerGL::paint(){ return 0; } // handle WM_PAINT
 int ControllerGL::command(int id, int cmd, LPARAM msg) { return 0; } // handle 
+int ControllerGL::keyDown(int key, LPARAM lParam)
+{ 
+	model->rotateParams(key);
+//	view->keyBoardInput(key);
+	return 0; 
+
+}
 
 
 //mButtonDown(wParam, LOWORD(lParam), HIWORD(lParam));

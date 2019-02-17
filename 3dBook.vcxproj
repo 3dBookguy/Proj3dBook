@@ -143,8 +143,8 @@
     </Manifest>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\shaders\shader.frag" />
-    <None Include="..\shaders\shader.vert" />
+    <None Include="Shade\shader.frag" />
+    <None Include="Shade\shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

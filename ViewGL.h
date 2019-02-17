@@ -21,12 +21,21 @@ namespace Win
     public:
         ViewGL(ModelGL* model);
         ~ViewGL();
+		
+		// The calling side (to ViewDW) of our callback interface.
+//		void DoItA(void* pt2Object, void(*pt2Function)(void* pt2Object, float* color));
+		void DoItA(void* pt2Object, void(*pt2Function)(void* pt2Object, glm::vec4* color));
 
+//		Triangle(&tri)[2]
+		void Callback_Using_Argument();
+	
 		void create(HWND handle);
 		// create OpenGL rendering context
         bool createContext(HWND handle);
 		void closeContext(HWND handle);
 		bool hookUpShaders();
+		void keyBoardInput(int key);
+
 		void leftButtonDown(int x, int y);
 		int  mouseMove(int x, int y);
 //		POINT mouseCoords();
@@ -47,6 +56,8 @@ namespace Win
 		void example8_Run(int run);
 		void example9_Run(int run);
 		void example10_Run(int run);
+		void example11_Run(int run);
+		void example12_Run(int run);
 		void palette(int run);
 // shaders
 	class ShaderLoad
@@ -110,6 +121,7 @@ namespace Win
 		// Shader uniform locations.
 		GLuint offsetLocation;
 		GLuint routineLocation;
+		GLuint rotateLoc;
 		GLuint projectionMatrixLocation;
 
 		// Handles to Windows device context
