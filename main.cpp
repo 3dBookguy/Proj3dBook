@@ -25,7 +25,6 @@ Instantiate controllers, views and models in this MVC style program
 // Model and View classes
 #include "ViewGL.h"
 #include "ViewDW.h"
-#include "ModelDW.h"
 #include "ModelGL.h"
 
 #include "Log.h"

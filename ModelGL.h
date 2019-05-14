@@ -13,17 +13,40 @@ Include file for ModelGL.cpp and ViewGL.cpp.
 // ViewGL includes this file so we need 
 // glm matrix includes here.
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext.hpp>
+#include <glm/matrix.hpp>
 //#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 namespace mConst
 {
-	const double pi = 2 * asin(1.0f);
+// trig consts
+	const float pi = 3.1415926535f;
+//	const float pi = acos(1.0f);
+	const float halfPi = pi/2.0f;
+	const float thirdPi = pi/3.0f;
+	const float twoPi_5 = 2*pi/5.0f;
+
+	const float sinThirdPi = sin(pi/3.0f);
+	const float sin3Pi_10 = sin(3*pi/10.0f);
+	const float sinPi_5 = sin(pi/5.0f);
+	const float tetDi = acos( 1.0f/3.0f );
+	const float tetDiComp = pi - tetDi;
+	const float octDi = acos( -1.0f/3.0f );
+	const float octDiComp = pi - octDi;
+	const float icosaDi = acos( -sqrt(5.0f)/3.0f );
+	const float icosaDiComp = pi - icosaDi;
+	const float dodecaDi = acos( -1/sqrt(5.0f));
+	const float dodecaDiComp = pi - dodecaDi;
+	const float dodecaSphere = static_cast<float>(sqrt(3.0)/4.0f)*(1+sqrt(5.0f));
 
 	const glm::vec4 origin4v = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	const glm::vec4 red = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	const glm::vec4 green = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	const glm::vec4 gray = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
 	const glm::vec4 blue = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	const glm::vec4 white = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	const glm::vec4 black = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	const glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
 	const glm::vec3 size = glm::vec3(0.1f, 0.1f, 0.1f);
@@ -34,14 +57,12 @@ namespace mConst
 }
 namespace Win
 {
-//	const double pi = 2*asin(1.0f);
-
-	struct Point
+	struct Vertex
 	{
 		glm::vec4 xyzw;
 		glm::vec4 rgba;
 
-		inline Point& operator+(const Point& rhs) {
+		inline Vertex& operator+(const Vertex& rhs) {
 			xyzw.x += rhs.xyzw.x;
 			xyzw.y += rhs.xyzw.y;
 			xyzw.z += rhs.xyzw.z;
@@ -54,9 +75,9 @@ namespace Win
 			return *this;
 		}
 
-		inline Point  operator- (void) const{ 
+		inline Vertex  operator- (void) const{ 
 			
-			Point u(*this);
+			Vertex u(*this);
 			u.xyzw.x = -u.xyzw.x;
 			u.xyzw.y = -u.xyzw.y;
 			u.xyzw.z = -u.xyzw.z;
@@ -72,17 +93,21 @@ namespace Win
 
 	struct Line
 	{
-		Point p[2];
+		Vertex v[2];
 	};
 
 	struct Triangle
 	{
-		Point p[3];
+		Vertex v[3];
 	};
-
 	struct Rectangle
 	{
 		Triangle T[2];
+	};
+
+	struct FanRectangle
+	{
+		Vertex v[4];
 	};
 
 	struct Matrx
@@ -104,33 +129,48 @@ namespace Win
 	public: ModelGL();
 
 		std::vector<glm::vec4> exampleN(int exampleNumber, int no_Vertices);
-		void examplePointer(int exampleNumber, int no_Vertices, Triangle* array);
-
-		Point point(float x, float y, float z, float w, float r, float g, float b, float a);
-		Line line(Point start, Point end);
-		Triangle triangle(Point A, Point B, Point C);
-//		std::vector<glm::vec4> rectangle(Point rect);
-//		std::vector<Triangle> box(Point box);
-		void exampleTri( Triangle &triVerts);
-		void exampleSubData(Triangle(&triVerts)[2]);
-		void rectangle(Point specs, Triangle(&tri)[2]);
-		void prism(Point(&specs)[5], Triangle(&tri)[8]);
-		void box(Point(&specs)[6], Triangle(&tri)[12]);
-		void coord_System(Point specs, Line(&axis)[3]);
-		void rgbTriAxis(Line(&axes)[3]);
-		void colorPalette(Rectangle(&rect)[1331]);
+		void examplePointer(int exampleNumber, int no_Vertices, Win::Triangle* array);
+		Win::Vertex point(float x, float y, float z, float w, float r, float g, float b, float a);
+		Win::Line line( Win::Vertex start, Win::Vertex end);
+		Win::Triangle triangle(Win::Vertex (&vert)[3]);
+		float lengthOfVector( glm::vec4 v );
+		float lengthOfVector(float a, float b);
+		void exampleTri( Win::Triangle &triVerts);
+		void equilateral(Triangle &T);
+		void equilateralFace(Triangle *&T);
+		void pentagonalFace(Triangle *&T);
+		void faces(Triangle *&T);
+		void tetrahedron(Triangle *&T);
+		void octahedron(Triangle *&T);
+		void icosahedron(Win::Triangle *&T);
+		void dodecahedron(Win::Triangle *&T);
+		void exampleSubData( Win::Triangle(&triVerts)[2]);
+		void rectangle( Win::Rectangle &rect );
+		void prism( Win::Vertex(&inSpec)[5], Win::Triangle(&outTri)[8]);
+		void box( Win::Rectangle (&inoutR)[6] );
+		void coord_System( Win::Vertex &inSpec, Win::Line(&outGrid)[3]);
+//		void tripod( Win::Line(&axes)[3]);
+		void xyzAxes(Win::Line(&axes)[3]);
+		void colorPalette( Win::Rectangle(&rect)[1331]);
 		void returnColor(int x, int y, int width, int height, glm::vec4 &color);
-//		void matricesFromInputs();
-		void rotateParams(int key);
-		glm::mat4 rotate();
+		void keyDown(int key);
+		glm::mat4 turnTable();
+		void setMsize(float scale);
+//		std::vector< Win::Triangle> cube(int grid, Win::Vertex &spec);
+		void cubeMesh(Win::Rectangle *&rect);
+		void grid(Win::Rectangle *&rect);
 	private:
+
 		std::vector<glm::vec4> vertices;
 		Matrx Mem;
 
-		// color palette stuff
+		// color palette params
 		static const  UINT rows = 36;
 		static const  UINT cols = 37;
 		glm::vec4 colorArray[rows][cols]{};
+
+
+
 	};
 }
 

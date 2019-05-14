@@ -43,12 +43,14 @@ Window::Window(HINSTANCE hInst, const wchar_t* name, HWND hParent, Controller* c
 	instance(hInst),
 	parentHandle(hParent),
 	controller(ctrl),
-	winStyle(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN ),
-	winStyleEx(WS_EX_CLIENTEDGE),
+	winStyle( WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN ),
+//	winStyleEx(WS_EX_CLIENTEDGE),  this style will have a border
+	winStyleEx(WS_EX_WINDOWEDGE),	
 	x(CW_USEDEFAULT),
  	y(CW_USEDEFAULT),
     width(CW_USEDEFAULT),
 	height(CW_USEDEFAULT)
+
 {
     	// copy string
 	wcsncpy(this->title, name, MAX_STRING-1);

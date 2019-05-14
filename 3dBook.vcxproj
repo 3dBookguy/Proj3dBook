@@ -143,6 +143,8 @@
     </Manifest>
   </ItemGroup>
   <ItemGroup>
+    <None Include="doc\platonic.tdr" />
+    <None Include="doc\Template.tdr" />
     <None Include="Shade\shader.frag" />
     <None Include="Shade\shader.vert" />
   </ItemGroup>

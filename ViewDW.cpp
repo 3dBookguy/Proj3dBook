@@ -1,7 +1,7 @@
-///////////////////////////////////////////////////////////////////////////////
+﻿///////////////////////////////////////////////////////////////////////////////
 // ViewDW.cpp
 // ==============
-// View component of OpenGL dialog window
+// View component of 3dBook-Reader directWrite window.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -22,8 +22,18 @@ template <class T> inline void SafeRelease(T **ppT)
 
 using namespace std;// used for string functions
 using namespace Win;
+
+// Static color menu menbers
+bool ViewDW::bColorMenu = FALSE;
+std::vector<std::wstring> ViewDW::menuText{};
+
+// Constuctor for ViewDW* mySelf out Callback pointer
+ViewDW::ViewDW():instanceID(2){ log(L"In the constructor 2"); }
  
+// Constructor for viewDW
 ViewDW::ViewDW(ViewGL* viewGL):
+
+	instanceID(1),
 
 // Pointer to ViewGL methods.
 	viewGL(viewGL),
@@ -31,16 +41,26 @@ ViewDW::ViewDW(ViewGL* viewGL):
 // Page State
 	indexPage(0),
 	tableOfContents(0),
+	currentPage(-1),
 	pageNumber(0),
 	numberOfPages(0),
+	linkIndex(-1),
+//	qlinkIndex(-1),
 
 // Menu Logic
+	bDrawPage(TRUE),
+	bCallGL(FALSE),
 	bDrawMenu(TRUE),
 	bMainMenu(TRUE),
 	bFileMenu(FALSE),
 	bPageMenu(FALSE),
-	bColorMenu(FALSE),
+	bNumberMenu(FALSE),
+		userInt(0),
+		userFloat(0),
 
+// Hyperlink & Qlink flags
+	bLeftButtonDown(FALSE),
+	bHitflag(FALSE),
 
 // D2D and DirectWrite
     pD2DFactory_(NULL),
@@ -58,16 +78,21 @@ ViewDW::ViewDW(ViewGL* viewGL):
 // DirectWrite
     pTextFormat_(NULL),
 	pMenuLayout_(NULL),
+	pMathLayout_(NULL),
 	pLeftLayout_(NULL),
-	pRightLayout_(NULL)
-
+	pRightLayout_(NULL),
+	pHyperLinkBrush_(NULL),
+	pQlinkBrush_(NULL)
 {
+	log(L"In the constructor 1");
 	ZeroMemory( &paperRect, sizeof(paperRect));
+	ZeroMemory( &menuRect, sizeof(paperRect));
 	ZeroMemory( &rtSize, sizeof(rtSize));
 	ZeroMemory( &leftPageOrigin, sizeof(leftPageOrigin));
 	ZeroMemory( &rightPageOrigin, sizeof(rightPageOrigin));
 	ZeroMemory( &pnumLeftRect, sizeof(pnumLeftRect));
 	ZeroMemory( &pnumRightRect, sizeof(pnumRightRect));
+	ZeroMemory( &colorFromGL, sizeof(colorFromGL));
 	pnumLeftRect.top = 0; pnumLeftRect.bottom = 20.0f;
 	pnumLeftRect.left = 0; 
 	pnumRightRect.top = 0; pnumRightRect.bottom = 20.0f;
@@ -75,9 +100,11 @@ ViewDW::ViewDW(ViewGL* viewGL):
 	leftPageOrigin.y = constants::pageTop;
 	rightPageOrigin.y = constants::pageTop;
 	menuText.resize(constants::menuCells);
+	menuFontSize = 12.0f;
 	fontSizeFactor = 1.25f;
 	imageScale.width = 1.0f;
 	imageScale.height = 1.0f;
+	dummy = L"dumb";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,12 +112,16 @@ ViewDW::ViewDW(ViewGL* viewGL):
 ///////////////////////////////////////////////////////////////////////////////
 ViewDW::~ViewDW()
 {  
+	log(L"In the destructor instanceID = %i", instanceID);
+	// Is it viewDW or the callback pointer ViewDW* mySelf
+	if(instanceID == 1){  // don't do all this if it's not viewDW
 	SafeRelease(&pTextFormat_);
 	SafeRelease(&pMenuFormat_);
+	SafeRelease(&pMathFormat_);
     SafeRelease(&pD2DFactory_);
     SafeRelease(&pDWriteFactory_);
 	SafeRelease(&m_pWICFactory);
-	DiscardDeviceResources();
+	DiscardDeviceResources();}
 }
 
 void ViewDW::DiscardDeviceResources(){
@@ -102,9 +133,12 @@ void ViewDW::DiscardDeviceResources(){
     SafeRelease(&pPaperBrush_);
 	SafeRelease(&pRedBrush_);
 	SafeRelease(&pMenuBrush_);
+	SafeRelease(&pHyperLinkBrush_);
+	SafeRelease(&pQlinkBrush_);
 	SafeRelease(&pLeftLayout_);
 	SafeRelease(&pRightLayout_);
 	SafeRelease(&pMenuLayout_);
+	SafeRelease(&pMathLayout_);
 	SafeRelease(&m_pBitmap);
     SafeRelease(&pRT_);
 //		if (pRT_)
@@ -124,6 +158,8 @@ void ViewDW::create(HWND hwnd)
 	mainHandle = GetParent( dwHandle );
 	initDW();
 	openDW_file(constants::START_PAGE);
+	viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
+
 }
 
 HRESULT ViewDW::initDW(){		
@@ -131,16 +167,9 @@ HRESULT ViewDW::initDW(){
 	log(L"ViewDW::initDW()");
 #endif
 
-//	maxClientSize
-////  maxClientArea used to scale text and images to window size
-//	maxClientHeight = GetSystemMetrics(SM_CYFULLSCREEN);
-//	maxClientWidth = GetSystemMetrics(SM_CXFULLSCREEN);
-//	maxClientArea = static_cast<float>(maxClientWidth * maxClientHeight);
-
+	// maxClientArea is used to scale text on resize of window
 	maxClientSize.width = static_cast<float>( GetSystemMetrics(SM_CXFULLSCREEN));
 	maxClientSize.height = static_cast<float>(GetSystemMetrics(SM_CYFULLSCREEN));
-
-//	maxClientWidth = GetSystemMetrics(SM_CXFULLSCREEN);
 	maxClientArea = maxClientSize.width * maxClientSize.height;
 
 
@@ -150,8 +179,6 @@ HRESULT ViewDW::initDW(){
 	if (SUCCEEDED(hr)){
 		pD2DFactory_->GetDesktopDpi(&dpiScaleX_, &dpiScaleY_);	
 		DpI = GetDpiForWindow(mainHandle);
-		//log(L"ViewDW::initDW() GetDpiForWindow(dwHandle) = %u; ", DpI);
-		//log(L"ViewDW::initDW() dpiScaleX_= %f", dpiScaleX_);
 		dpiScaleX_ = 96/dpiScaleX_;
 		dpiScaleY_ = 96/dpiScaleY_;
 	}
@@ -194,11 +221,26 @@ HRESULT ViewDW::initDW(){
 			DWRITE_FONT_WEIGHT_LIGHT,
 			DWRITE_FONT_STYLE_NORMAL,
 			DWRITE_FONT_STRETCH_SEMI_CONDENSED,
-			constants::menuFontSize,
+			//constants::menuFontSize,
+			menuFontSize,
 			L"en-us",
 			&pMenuFormat_);
 
-		pMenuFormat_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+		pMenuFormat_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+   }
+	if (SUCCEEDED(hr)){ 
+		hr = pDWriteFactory_->CreateTextFormat( 
+			L"Cambria Math",
+			NULL,  
+			DWRITE_FONT_WEIGHT_LIGHT,
+			DWRITE_FONT_STYLE_ITALIC,
+			DWRITE_FONT_STRETCH_NORMAL,
+			//constants::menuFontSize,
+			constants::bookFontSize,
+			L"en-us",
+			&pMathFormat_);
+
+		pMathFormat_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
    }
 	return hr;
 }
@@ -277,7 +319,11 @@ bool ViewDW::openDW_file( int reloadFlag ){
 #ifdef DEBUG_GB	
 	log(L"ViewDW::openDW_file( int reloadFlag )");
 #endif
+
 	if( reloadFlag == constants::CANCEL ) return FALSE;
+
+	bDrawPage =  TRUE;
+
 	if (reloadFlag == constants::HELP)
 	{
 		pageNumber = 0;
@@ -288,7 +334,6 @@ bool ViewDW::openDW_file( int reloadFlag ){
 	}
 	else if( reloadFlag == constants::START_PAGE )
 	{	
-
 		pageNumber = 0;
 		// Note relative path is not the same for running in VS and from taskbar
 //		reload_Filename = L".\\src\\doc\\start.tdr";
@@ -298,7 +343,7 @@ bool ViewDW::openDW_file( int reloadFlag ){
 
 		// Let user know TDR Failed to load start.tdr - how to recover, etc.
 		if (book.find(L"Could not open this file.") != wstring::npos) 
-		{
+		{		
 			loadRecoverText();
 		}
 	}
@@ -307,7 +352,7 @@ bool ViewDW::openDW_file( int reloadFlag ){
 
 		// Dont try to draw a pageNumber > numberOfPages;
 		pageNumber = 0;
-
+		bDrawPage = TRUE;
 		TCHAR szFile[256];
 		ZeroMemory( &ofn , sizeof( ofn));
 		ofn.lStructSize = sizeof ( ofn );
@@ -356,6 +401,27 @@ bool ViewDW::openDW_file( int reloadFlag ){
 		return TRUE; 
 	} 
 }
+void ViewDW::reportFormatError(int pageNo, int index, std::wstring temp){
+
+	// Correct the format error: add a trailing space.
+	Pages[pageNo].text.insert(index + 3, L" ");
+
+	std::wstring page = L"Format error was found on page ";
+	std::wstring blurb = temp;
+	
+	page.append(to_wstring(pageNo));
+	page.append(L" index " );
+	page.append(to_wstring(index));
+
+	blurb.append(L" format error found on page \n"
+			"check for missing space after the format block.\n"
+			"See log.txt for details.  TDR will add the missing space\n"
+			"but the .tdr file needs to be corrected.");
+
+	MessageBox(NULL, blurb.c_str(), page.c_str(), MB_ICONWARNING);
+}
+
+
 
 // The text is now in std::wstring book and we start parsing.
 // We need the count of formats to resize our Pages struct
@@ -367,7 +433,7 @@ void ViewDW::countFormatBlocks(){
 	log(L"ViewDW::countFormatBlocks()");
 #endif
 
-//	std::wstring temp;
+	std::wstring temp;
 
 	int index(0);
 	for( int i = 0; i < numberOfPages; i++ ){
@@ -379,9 +445,8 @@ void ViewDW::countFormatBlocks(){
 		{
 			index = Pages[i].text.find(L"\\i", index);
 			if( index < 0 ) break;
-			if (Pages[i].text[index + 2] == L'0')
+			if (Pages[i].text[index + 2] == L'0' )
 			{
-			//	log(L"ital format at = %i page = %i", index, i);					
 				++Pages[i].itals;
 			}
 			++index;
@@ -399,16 +464,22 @@ void ViewDW::countFormatBlocks(){
 			if( index < 0 ) break;
 			if(Pages[i].text[ index + 2 ] == L'0' )
 			{
-			//	log(L"bold format at = %i page = %i", index, i);					
+				// Check for format errors
+				if( Pages[i].text[index + 3] != L' ' && Pages[i].text[index + 3] != L'\\' ){
+					temp = L"Bold";
+					reportFormatError(i, index, temp);
+				}		
 				++Pages[i].bolds;
+			}
+			// Check for format errors
+			else if (Pages[i].text[index + 2] != L' ' && Pages[i].text[index + 2] != L'\\') {
+				temp = L"Bold";
+				reportFormatError(i, index, temp);
 			}
 			++index;
 		}
-//		log(temp);
-//		log(L"Pages[%i].bolds; = %i", i, Pages[i].bolds);
 		Pages[i].boldRange.clear();
 		Pages[i].boldRange.resize(Pages[i].bolds);
-//		temp.clear();
 
 // ---- Underlines ----
 		index = 0;
@@ -428,6 +499,42 @@ void ViewDW::countFormatBlocks(){
 //		log(L"Pages[%i].ulines; = %i", i, Pages[i].ulines);
 		Pages[i].ulineRange.clear();
 		Pages[i].ulineRange.resize(Pages[i].ulines);
+
+// ---- Hyperlinks ----
+		index = 0;
+		Pages[i].links = 0;
+		while (index > -1)
+		{
+			index = Pages[i].text.find(L"\\h", index);
+			if (index < 0) break;
+			if (Pages[i].text[index + 2] == L'0')
+			{			
+				++Pages[i].links;
+			}
+			++index;
+		}
+
+		//		log(L"Pages[%i].links; = %i", i, Pages[i].links);
+		Pages[i].linkRange.clear();
+		Pages[i].linkRange.resize(Pages[i].links);
+
+// ---- qlinks ----
+		index = 0;
+		Pages[i].qlinks = 0;
+		while (index > -1)
+		{
+			index = Pages[i].text.find(L"\\q", index);
+			if (index < 0) break;
+			if (Pages[i].text[index + 2] == L'0')
+			{
+				++Pages[i].qlinks;
+			}
+			++index;
+		}
+
+		//		log(L"Pages[%i].qlinks; = %i", i, Pages[i].qlinks);
+		Pages[i].qlinkRange.clear();
+		Pages[i].qlinkRange.resize(Pages[i].qlinks);
 
 // ---- Font Sizes ----
 		index = 0;
@@ -452,28 +559,31 @@ void ViewDW::countFormatBlocks(){
 		{
 			index = Pages[i].text.find(L"\\f", index);
 			if (index < 0) break;
+			// Check for format errors
 			if (Pages[i].text[index + 3] != L' ' && Pages[i].text[index + 3] != L'\\')
 			{
-				std::wstring page = to_wstring(i);
-				page.append(L" = the page the error was found on." );
-				MessageBox(NULL,
-					TEXT("Font name format error found on page \n"
-					"check for missing space after the format block.\n"
-					"See log.txt for details.  TDR will add the missing space\n"
-					"but the .tdr file needs to be corrected."), page.c_str(), MB_ICONWARNING);
+				temp = L"Font";
+				reportFormatError(i, index, temp);
 
-				std::wstring space = L" ";
-				Pages[i].text.insert(index + 3, space);
-				log(L"Pages[%i] format error: index = %i", i, index);				
-				page.clear();
-				// need to do some range checking here
-				page.append(Pages[i].text, index , 15);
-				log(page);
+				//std::wstring page = to_wstring(i);
+				//page.append(L" = the page the error was found on." );
+				//MessageBox(NULL,
+				//	TEXT("Font name format error found on page \n"
+				//	"check for missing space after the format block.\n"
+				//	"See log.txt for details.  TDR will add the missing space\n"
+				//	"but the .tdr file needs to be corrected."), page.c_str(), MB_ICONWARNING);
+
+				//std::wstring space = L" ";
+				//Pages[i].text.insert(index + 3, space);
+				//log(L"Pages[%i] format error: index = %i", i, index);				
+				//page.clear();
+				//// need to do some range checking here
+				//page.append(Pages[i].text, index , 15);
+				//log(page);
 			}
 			++Pages[i].names;			
 			++index;
 		}
-//		log(L"Pages[%i].fontNames; = %i", i, Pages[i].names);
 		Pages[i].fontNumbers.clear();
 		Pages[i].fontNumbers.resize(Pages[i].names);
 		Pages[i].fontNameRange.clear();
@@ -595,7 +705,7 @@ void ViewDW::parseText(){
 //			 Hack to let us have text backslahes in our Pages[i].text
 			if (Pages[i].text[fbStart + 1] == L'\\')
 			{
-				log(L"found two backslahes");
+			//	log(L"found two backslahes page %i", i);
 				Pages[i].text.erase(fbStart , 0);
 				++fbStart;
 			}
@@ -632,6 +742,8 @@ void ViewDW::parseText(){
 //			}// End if (flag)
 		} // End while(
 	} // End for i loop
+
+
 	return;
 }// End void ViewDW::parseText(){
 
@@ -712,6 +824,36 @@ void ViewDW::setTextRanges(int pageIndex, int wordIndex){
 		}
 	}
 
+// --------------------- Hyperlinks  ----------------------
+	static int linkCount(0);
+	if (Pages[pageIndex].links > 0) {
+		fbIndex = fbChange.find(L"\\h");
+		if (fbIndex != wstring::npos) {
+			if (fbChange[fbIndex + 2] != '0')
+				Pages[pageIndex].linkRange[linkCount].startPosition = wordIndex;
+			else{
+				Pages[pageIndex].linkRange[linkCount].length = wordIndex -
+					Pages[pageIndex].linkRange[linkCount].startPosition;
+				++linkCount;
+			}
+			if (linkCount == Pages[pageIndex].links) linkCount = 0;
+		}
+	}
+// --------------------- Qlinks  ----------------------
+	static int qlinkCount(0);
+	if (Pages[pageIndex].qlinks > 0) {
+		fbIndex = fbChange.find(L"\\q");
+		if (fbIndex != wstring::npos) {
+			if (fbChange[fbIndex + 2] != '0')
+				Pages[pageIndex].qlinkRange[qlinkCount].startPosition = wordIndex;
+			else {
+				Pages[pageIndex].qlinkRange[qlinkCount].length = wordIndex -
+					Pages[pageIndex].qlinkRange[qlinkCount].startPosition;
+				++qlinkCount;
+			}
+			if (qlinkCount == Pages[pageIndex].qlinks) qlinkCount = 0;
+		}
+	}
 // ---------------------  Names  ----------------------
 	static int nameCount(0);
 	std::wstring temp;
@@ -783,7 +925,7 @@ void ViewDW::setTextRanges(int pageIndex, int wordIndex){
 		fbIndex = fbChange.find(L"\\c");
 		if (fbIndex != wstring::npos) {
 			Pages[pageIndex].imageNames[imageCount].append(fbChange, 2, fbChange.size() - 14);
-			log(Pages[pageIndex].imageNames[imageCount]);
+		//	log(Pages[pageIndex].imageNames[imageCount]);
 			temp.clear();
 			temp.append(fbChange, fbChange.size() - 12, 3);
 			Pages[pageIndex].imageRect[imageCount].left = stof(temp);
@@ -801,7 +943,6 @@ void ViewDW::setTextRanges(int pageIndex, int wordIndex){
 			if (imageCount == Pages[pageIndex].images) imageCount = 0;
 		}
 	}
-
 
 	return;
 } // End setTextState
@@ -860,7 +1001,7 @@ void ViewDW::setTextLayout(int pageIndex, int side){
 		if (side == constants::LEFT_PAGE) {
 			pLeftLayout_->SetFontStyle(DWRITE_FONT_STYLE_ITALIC,
 				Pages[pageIndex].italRange[i]);
-			pLeftLayout_->SetDrawingEffect(pRedBrush_, Pages[pageIndex].italRange[i]);
+	//		pLeftLayout_->SetDrawingEffect(pRedBrush_, Pages[pageIndex].italRange[i]);
 		}
 		else if( side == constants::RIGHT_PAGE ) 
 			pRightLayout_->SetFontStyle(DWRITE_FONT_STYLE_ITALIC,
@@ -883,6 +1024,30 @@ void ViewDW::setTextLayout(int pageIndex, int side){
 		else if( side == constants::RIGHT_PAGE ) 
 			pRightLayout_->SetUnderline(TRUE, Pages[pageIndex].ulineRange[i]);
 	}
+
+// ---------------------  Hyperlinks  --------------------
+	for (int i = 0; i < Pages[pageIndex].links; i++){
+		if (side == constants::LEFT_PAGE){
+			pLeftLayout_->SetDrawingEffect(pHyperLinkBrush_, Pages[pageIndex].linkRange[i]);
+			if( i == linkIndex) pLeftLayout_->SetUnderline(TRUE, Pages[pageIndex].linkRange[i]);
+			else  pLeftLayout_->SetUnderline( FALSE, Pages[pageIndex].linkRange[i]);
+		}
+		else if (side == constants::RIGHT_PAGE){
+			pRightLayout_->SetDrawingEffect(pHyperLinkBrush_, Pages[pageIndex].linkRange[i]);
+		   if (i == linkIndex) pRightLayout_->SetUnderline(TRUE, Pages[pageIndex].linkRange[i]);
+		   else  pRightLayout_->SetUnderline(FALSE, Pages[pageIndex].linkRange[i]);
+		}
+	}
+
+// ---------------------  Qlinks  --------------------
+	for (int i = 0; i < Pages[pageIndex].qlinks; i++) {
+		if (side == constants::LEFT_PAGE) {
+			pLeftLayout_->SetDrawingEffect(pQlinkBrush_, Pages[pageIndex].qlinkRange[i]);
+		}
+		else if (side == constants::RIGHT_PAGE) {
+			pRightLayout_->SetDrawingEffect(pQlinkBrush_, Pages[pageIndex].qlinkRange[i]);
+		}
+	}
 // ---------------------  Names  --------------------
 	for( int i = 0; i < Pages[pageIndex].names; i++){
 		font = fontNames[ Pages[pageIndex].fontNumbers[i] ] ;
@@ -896,136 +1061,179 @@ void ViewDW::setTextLayout(int pageIndex, int side){
 // ---------------------  Sizes  --------------------
 	for( int i = 0; i < Pages[pageIndex].sizes; i++){
 		if( side == constants::LEFT_PAGE ) 
-			//pLeftLayout_->SetFontSize(1.25*Pages[pageIndex].fontSizes[i],
-			//	Pages[pageIndex].fontSizeRange[i]);
-
 			pLeftLayout_->SetFontSize(fontSizeFactor*Pages[pageIndex].fontSizes[i],
 				Pages[pageIndex].fontSizeRange[i]);
 		if( side == constants::RIGHT_PAGE ) 
-			//pRightLayout_->SetFontSize(1.25*Pages[pageIndex].fontSizes[i],
-			//	Pages[pageIndex].fontSizeRange[i]);
-
 		pRightLayout_->SetFontSize(fontSizeFactor*Pages[pageIndex].fontSizes[i],
 			Pages[pageIndex].fontSizeRange[i]);
 	}
-
 	return;
 }
 
-// When user hits a key on the KB -> triggers a WM_CHAR from windows;
-// called from int ControllerDW::getChar(  WPARAM message ).
-void ViewDW::getChar( WPARAM charCode){
-#ifdef DEBUG_GB
-	log(L"void ViewDW::getChar( WPARAM charCode = %i",charCode);
+// Displays user KB input to Number Menu and returns 0 until
+// user hits enter.
+// On enter: returns code for Integer, Float, or Not a Number
+// writes the entered string to userFloat = stof(number);
+// or userInt = std::stol(number, nullptr, 10);
+int ViewDW::getNumber(WPARAM charCode){
+	log(L"void ViewDW::getNumber( WPARAM charCode = %i", charCode);
 
-#endif
-	int digit;
-	static int newPageNumber = -1;
-	static int charCount = 0;
-	static int pageDigit[3];
+	static std::wstring number{};
 
-// The keys 0 - 9  send the values 48 thru 57 in WPARAM charCode.
-// A backspace sends 8 in charCode; enter send 13 in charCode.
-  
-	// charCount is init to 0 then reset to 0 when user presses enter in page menu
-	if( bPageMenu )
-	{
-		// User presses enter (charCode = 13 ) while page menu is active.
-		// If we have a valid pageNumber draw the page, remove the page menu.
-		if( charCode == 13 )
-		{
-			log(L"User entered %i", newPageNumber);
-			charCount = 0;
-			pageDigit[0] = pageDigit[1] = pageDigit[1] = 0;
-			bDrawMenu = TRUE;
-			bPageMenu = FALSE;
-			bMainMenu = TRUE;
+// What about number pad input???
 
-			// If we are in gL_gL mode dwWin has zero size and
-			// InvalidateRect won't send WM_PAINT to dwWin.
-			// We need to give dwWin some size so windows will
-			// send WM_PAINT to it.
+// User entered a number.	
+	if (charCode > 47 && charCode < 58) {
+		number.append(to_wstring(charCode - 48));
+		menuText[1] = number;
+	}
 
-			if (Pages[pageNumber].mode == constants::gL_gL &&
-				Pages[newPageNumber].mode != constants::gL_gL)
-			SendMessage(mainHandle, WM_SIZE, Pages[newPageNumber].mode, newPageNumber);
+// User entered a backspace.
+	else if (charCode == 8 && number.size() > 0) {
+		number.erase(number.size() - 1);
+		if (number.size() == 0) menuText[1] = L"#";
+		else menuText[1] = number;
+	}
 
+// User entered a L".".
+	else if( charCode == 190 && number.find(L".") == wstring::npos){
+		number.append(L".");
+		menuText[1] = number;		 
+	 }
 
-			if( newPageNumber > -1 )
-			{
-				pageNumber = newPageNumber;
-				newPageNumber = -1;
+// User entered a L"-". 
+	 else if( charCode == 189 && number.size() == 0){
+			 number = L"-";
+			 menuText[1] = number;
+	 }
+
+// User hit return.
+	else if (charCode == 13) {
+		if (number.size() > 0){
+			if (number.size() == 1) {
+				if (number == L"." || number == L"-")
+				{ number = L"0";}
 			}
 
-//			if (Pages[pageNumber].mode == constants::gL_gL) return;
- 
-			setMenuText(newPageNumber);
-			InvalidateRect( dwHandle, NULL, FALSE );
-			return;
-		}
+// Might need to check some bounds here.
+// If the value read is out of the range of
+// representable values by an int, an out_of_range exception is thrown.
+			if (number.find(L".") == wstring::npos){ 
+				userInt = std::stol(number, nullptr, 10);
+				//userInt = stoi(number);
+				userFloat = 0.0f;
+				log(L"int i_number = %i ", userInt);
+				number.clear();
+				return constants::HAVE_USER_INT;
+			}
+			else{ userFloat = std::stof(number, nullptr);
+				log(L"int f_number = %f ", userFloat);
+				userFloat = stof(number); 
+				userInt = 0;
+				log(L"int f_number = %f ", userFloat);
+				number.clear();
+				return constants::HAVE_USER_FLOAT;
+			}
+		 }
+		number.clear();
+		// User entered - but not a number.
+		return constants::HAVE_USER_ENTER;
+	}
+	InvalidateRect(dwHandle, NULL, FALSE);
+	return(0);
+}
 
-		// Check for backspace
-		if (charCode == 8)
-		{
-			if( charCount > 0) --charCount;
-			else return; 
-		}
 
-		// Check for digit
-		if(charCode > 47 && charCode < 58 ) digit = charCode - 48;
-		else if (charCode != 8 ) return;
+void ViewDW::getUserNumber( WPARAM findChar ){
 
-		if( charCount < 3 )
-		{
-			if( charCode == 8  ) pageDigit[charCount] = 0;
-			else
-			{ 
-				pageDigit[charCount] = digit; 
-				++charCount;
-			} 
-		}
-		if( charCount == 0 ) newPageNumber = -1; // tell display menu to display "?"
-		else if( charCount == 1 ) newPageNumber = pageDigit[0];
-		else if( charCount == 2 ) newPageNumber = 10*pageDigit[0] + pageDigit[1];
-		else if( charCount == 3 ) newPageNumber = 100*pageDigit[0] + 10*pageDigit[1] + pageDigit[2];
-		if( newPageNumber >= numberOfPages) newPageNumber = numberOfPages - 1; // Catch attemps to go past end of book.
-		setMenuText(newPageNumber);
+	// User has entered - get out of Page Menu
+	if( getNumber(findChar) != 0) {
+		bDrawMenu = TRUE;
+		bDrawPage = FALSE;
+		bNumberMenu = FALSE;
+		bMainMenu = TRUE;
 		InvalidateRect( dwHandle, NULL, FALSE );
-	} // End if( bPageMenu )
+	}
+}
+
+
+void ViewDW::getPageNumber( WPARAM findChar ){
+
+	int getNumResutlt = getNumber( findChar );
+
+	// User has entered - get out of Page Menu
+	if( getNumResutlt !=0 ){
+		bDrawMenu = TRUE;
+		bPageMenu = FALSE;
+		bMainMenu = TRUE;
+	}
+
+	if( getNumResutlt == constants::HAVE_USER_INT )
+	{
+		if (userInt < 1) pageNumber = 0;
+		else if( userInt >= numberOfPages) pageNumber = numberOfPages - 1;
+		else pageNumber = userInt;
+		viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
+		bDrawPage = TRUE;
+		userInt = 0;
+	}
+
+	InvalidateRect(dwHandle, NULL, FALSE);
 	return;
 }
 
-// Called from drawDW whenever bDrawMenu flag is TRUE
-//void ViewDW::drawMenu(int windowWidth){
+
 void ViewDW::drawMenu(float windowWidth ) {
 #ifdef DEBUG_GB	
- log(L"ViewDW::drawMenu(int windowWidth = %f)", windowWidth );
+// log(L"ViewDW::drawMenu(int windowWidth = %f)", windowWidth );
 #endif
+//	DWRITE_TEXT_METRICS textMetrics;
+	D2D1_POINT_2F origin {0.0f};
+	DWRITE_TEXT_RANGE tRange {0}; // tRange.startPosition; tRange.length
+	menuCellWidth = ( windowWidth - constants::pageMargin )/(constants::menuCells + 0.2f );
 
-	D2D1_POINT_2F origin = {0.0f};
-	DWRITE_TEXT_RANGE tRange = {0};
-	float fontSize = 0.0f;
-	menuCellWidth = windowWidth/static_cast<float>(constants::menuCells + 0.2f );
-//	log(L"ViewDW::drawMenu(cellWidth = %f)", menuCellWidth);
-	if (windowWidth < 954 )
-		fontSize = windowWidth*constants::menuFontScaleFactor;
-	else fontSize = 19.0f;
-	for( int i = 0; i < constants::menuCells; i++ )
+	if (windowWidth < maxClientSize.width/2.0f)
+		menuFontSize = windowWidth * constants::menuFontScaleFactor;
+	else menuFontSize = 19.0f;
+	for( int i = 0; i < constants::menuCells; i++ ) 
 	{
-		origin.x = static_cast<float>(i + 0.2)*menuCellWidth;
-		tRange.length = menuText[ i ].size();
-
 		SafeRelease(&pMenuLayout_);
 		pDWriteFactory_->CreateTextLayout(
 			(PWSTR)menuText[ i ].c_str(),
 			(UINT32)lstrlen((PWSTR)menuText[ i ].c_str()),			
 			pMenuFormat_,
-			menuCellWidth,
+			menuCellWidth + 20.0f,
 			constants::menuHeight,  
 			&pMenuLayout_ );
+
+//		pMenuLayout_->GetMetrics( &textMetrics);
+//       log(L"ViewDW::drawMenu(int textMetrics.lineCount = %i)", textMetrics.lineCount );
+
+
 		if( i == iMenuCell ) pMenuBrush_->SetColor(constants::menuTextHighlightColor);
 		else pMenuBrush_->SetColor(constants::menuTextColor);
-		pMenuLayout_->SetFontSize( fontSize, tRange);
+		origin.x = constants::pageMargin +  i*menuCellWidth;
+		tRange.length = menuText[ i ].size();
+		pMenuLayout_->SetFontSize(menuFontSize, tRange);
+
+		if (ViewDW::bColorMenu || bNumberMenu || bPageMenu )
+			pMenuBrush_->SetColor(constants::menuTextHighlightColor);
+
+		// Underline the leading letter of
+		if(bMainMenu ){	
+			tRange.length = 1;
+			if( i == constants::PAGE || i == constants::HELP || 
+				i == constants::COLOR || i == constants::NUMBER)
+				pMenuLayout_->SetUnderline(TRUE, tRange);
+		}
+
+		if(bFileMenu) {
+			tRange.length = 1;
+			if (i == constants::LOAD || i == constants::RELOAD ||
+				i == constants::CANCEL )
+				pMenuLayout_->SetUnderline(TRUE, tRange);
+		}
+
 		pRT_->DrawTextLayout( origin , pMenuLayout_, pMenuBrush_ );
 	}
 }
@@ -1049,6 +1257,9 @@ HRESULT ViewDW::CreateDeviceResources()
 		pRT_->CreateSolidColorBrush(constants::paperColor, &pPaperBrush_ ); 
 		pRT_->CreateSolidColorBrush(D2D1::ColorF(0xF4B480),  &pBookTextBrush_ );
 		pRT_->CreateSolidColorBrush(constants::menuTextColor,  &pMenuBrush_ );
+		pRT_->CreateSolidColorBrush(constants::hyperLinkBlue, &pHyperLinkBrush_);
+		pRT_->CreateSolidColorBrush(constants::qLinkColor, &pQlinkBrush_);
+
 	}
 
 	if( FAILED( hr )) return hr;
@@ -1057,14 +1268,14 @@ HRESULT ViewDW::CreateDeviceResources()
 }
 void ViewDW::setPageSize(int pageNumber){
 #ifdef DEBUG_GB
-log(L"ViewDW::setPageSize(int pageNumber) = %i", pageNumber);
+ //log(L"ViewDW::setPageSize(int pageNumber) = %i", pageNumber);
 #endif
 	
 	// This seems to be a crash site so we add the following
 	// check for a dangling pointer 12-12-18
 	if( pRT_ ) rtSize = pRT_->GetSize();
 	else{
-		log(L"ViewDW::setPageSize if( pRT_ ) returned false");
+	//	log(L"ViewDW::setPageSize if( pRT_ ) returned false");
 		return;
 	}
 
@@ -1072,16 +1283,18 @@ log(L"ViewDW::setPageSize(int pageNumber) = %i", pageNumber);
 	imageScale.height = rtSize.height / maxClientSize.height;
 	paperRect.right = rtSize.width; paperRect.bottom = rtSize.height;
 
+	menuRect.left = constants::pageMargin;
+	menuRect.right = paperRect.right - 25.0f; menuRect.bottom = constants::menuHeight;
+
 	if (Pages[pageNumber].mode == constants::dW_gL)
 	{
 		// Scale font to window size
 		fontSizeFactor = 1.25f*sqrt(2.0f*(pageArea / maxClientArea));
 		imageScale.width = 2.0f*rtSize.width / maxClientSize.width;
-		// Tell viewGL to display the palette
-		if (bColorMenu) viewGL->hello_From_DW(constants::PALETTE);
-		else viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
-		if (rtSize.width > 2.0f*constants::pageMargin)
+
+		if (rtSize.width > 2.0f*constants::pageMargin){
 			fpageWidth = rtSize.width - 2.0f*constants::pageMargin;
+			menuRect.right = rtSize.width;}
 		else  fpageWidth = rtSize.width;
 
 		if (rtSize.height > 2 * constants::pageMargin)
@@ -1091,7 +1304,7 @@ log(L"ViewDW::setPageSize(int pageNumber) = %i", pageNumber);
 	}
 
 	if( Pages[pageNumber].mode == constants::dW_dW )
-	{  
+	{   
 		// Scale font to window size
 		fontSizeFactor = 1.25f*sqrt(pageArea/maxClientArea);
 		imageScale.width = rtSize.width / maxClientSize.width;
@@ -1104,13 +1317,10 @@ log(L"ViewDW::setPageSize(int pageNumber) = %i", pageNumber);
 		if( rtSize.height > 2*constants::pageMargin )
 			fpageHeight = rtSize.height - 2.0f*constants::pageMargin;
 		else  fpageHeight = rtSize.height;
-		viewGL->hello_From_DW(-1);
 		return;
 	}
 
 	if (Pages[pageNumber].mode == constants::gL_gL) {
-		//		log(L"Pages[pageNumber].mode = constants::gL_gL");
-		viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
 		return;
 	}
 
@@ -1119,7 +1329,7 @@ log(L"ViewDW::setPageSize(int pageNumber) = %i", pageNumber);
 
 void ViewDW::setLeftRightLayout( int pageNumber){
 #ifdef DEBUG_GB
-log(L"ViewDW::setLeftRightLayout() ");
+// log(L"ViewDW::setLeftRightLayout()  , pageNumber = %i", pageNumber);
 #endif
 
 	if( pageNumber >= 0 )
@@ -1134,9 +1344,11 @@ log(L"ViewDW::setLeftRightLayout() ");
 
 		if( Pages[pageNumber].mode == constants::dW_dW)
 		{
+			// Don't go past the last page
 			if( pageNumber + 1 < numberOfPages && 
 				Pages[pageNumber + 1 ].mode != constants::gL_gL)
 			{
+		//		log(L"pageNumber + 1 < numberOfPages ");
 				createLayout(pageNumber + 1, constants::RIGHT_PAGE);
 				setTextLayout( pageNumber + 1, constants::RIGHT_PAGE);
 				return;
@@ -1148,7 +1360,7 @@ log(L"ViewDW::setLeftRightLayout() ");
 
 void ViewDW::createLayout(int pageNumber, int side){
 #ifdef DEBUG_GB
-log(L"ViewDW::createLayout(int pageNumber, int side) ");
+ // log(L"ViewDW::createLayout(int pageNumber, int side) ");
 #endif
 
 	if( side == constants::LEFT_PAGE )
@@ -1170,34 +1382,34 @@ log(L"ViewDW::createLayout(int pageNumber, int side) ");
 		return;
 	}
 }
+
 void ViewDW::drawPageNumber(int pageNumber, int side){
 #ifdef DEBUG_GB
-log(L"ViewDW::drawPageNumber(int pageNumber, int side) ");
+//  log(L"ViewDW::drawPageNumber(int pageNumber, int side) ");
 #endif
 
 	pnum.clear();
 	pnum = to_wstring( pageNumber);
-	if( side == constants::LEFT_PAGE )
-	{
-		pnumLeftRect.right = (UINT32)lstrlen((PWSTR)pnum.c_str())*9.0f;
-		pRT_->DrawText((PWSTR)pnum.c_str(), 
-			(UINT32)lstrlen((PWSTR)pnum.c_str()),
-			pMenuFormat_, pnumLeftRect, pBookTextBrush_ ,
-			D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_NATURAL );
-		return;
-	}
+
+	SafeRelease(&pMenuLayout_);
+	pDWriteFactory_->CreateTextLayout(
+		(PWSTR)pnum.c_str(),
+		(UINT32)lstrlen((PWSTR)pnum.c_str()),
+		pMenuFormat_,
+		15.0f*static_cast<float>(pnum.size()),
+		constants::menuHeight,
+		&pMenuLayout_);
+
+	// Scale the font size
+	DWRITE_TEXT_RANGE tRange{ 0 };
+	D2D1_POINT_2F origin{ 0.0f };
+	tRange.length = pnum.size();
+	pMenuLayout_->SetFontSize(fontSizeFactor*14.0f, tRange);
 
 	if( side == constants::RIGHT_PAGE )
-	{
-		pnumRightRect.right = paperRect.right;
-		pnumRightRect.left =  paperRect.right - 
-			(UINT32)lstrlen((PWSTR)pnum.c_str())*9.0f;
-		pRT_->DrawText((PWSTR)pnum.c_str(), 
-			(UINT32)lstrlen((PWSTR)pnum.c_str()),
-			pMenuFormat_, pnumRightRect, pBookTextBrush_ ,
-			D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_NATURAL );
-		return;
-	}
+		origin.x = paperRect.right - 15.0f*static_cast<float>(pnum.size());
+
+	pRT_->DrawTextLayout(origin, pMenuLayout_, pBookTextBrush_);
 	return;
 }
 
@@ -1218,41 +1430,57 @@ log(L"ViewDW::drawPageNumber(int pageNumber, int side) ");
 //
 void ViewDW::drawPageImages(int pageNumber, int side) {
 #ifdef DEBUG_GB
-	log(L"ViewDW::drawPageImages(int pageNumber, int side) ");
+//	log(L"ViewDW::drawPageImages(int pageNumber = %i, int side = %i) ", pageNumber, side);
 #endif
+	float width{0.0f};
+	if (side == constants::RIGHT_PAGE) width = fpageWidth + constants::pageMargin;
+	else width = 0.0f;
+
+	D2D1_RECT_F imgRect{0};
 
 	for (int i = 0; i < Pages[pageNumber].images; i++) 
 	{
-//		log(Pages[pageNumber].imageNames[i]);
+		imgRect.left = width + imageScale.width*Pages[pageNumber].imageRect[i].left;
+		imgRect.top = imageScale.height*Pages[pageNumber].imageRect[i].top;
+
 		imageFilePathName.clear();
 		imageFilePathName = dwConst::imageFilePath;
 		imageFilePathName = imageFilePathName.append(Pages[pageNumber].imageNames[i]);
-//		log(imageFilePathName);
-		LoadBitmapFromFile(pRT_, m_pWICFactory,
+		HRESULT hr =LoadBitmapFromFile(pRT_, m_pWICFactory,
 			(PWSTR)imageFilePathName.c_str(),
 			static_cast<int>(Pages[pageNumber].imageRect[i].right),
 			static_cast<int>(Pages[pageNumber].imageRect[i].bottom),
 			&m_pBitmap);
 
+		if (SUCCEEDED(hr))
+		{
 		D2D1_SIZE_F bmSize = m_pBitmap->GetSize();
+		pRT_->DrawBitmap(m_pBitmap, D2D1::RectF(imgRect.left, imgRect.top,
+			imgRect.left + imageScale.width*bmSize.width,
+			imgRect.top + imageScale.height*bmSize.height));
+		}
+		else
+		{
+			std::wstring help = L"Ooops:  Can't load \n";
+			help.append(Pages[pageNumber].imageNames[i]);
 
-		float width;
-		if (side == constants::RIGHT_PAGE) width = fpageWidth + constants::pageMargin;
-		else width = 0.0f;
-
-		pRT_->DrawBitmap(m_pBitmap, D2D1::RectF(width +
-			imageScale.width*Pages[pageNumber].imageRect[i].left,
-			imageScale.height*Pages[pageNumber].imageRect[i].top,
-			width + imageScale.width*(Pages[pageNumber].imageRect[i].left + bmSize.width),
-			imageScale.height*(Pages[pageNumber].imageRect[i].top + bmSize.height)));
+			pRT_->DrawText(help.c_str(),
+				(UINT32)lstrlen(help.c_str()),
+				pTextFormat_, 
+				D2D1::RectF(imgRect.left, imgRect.top, imgRect.left + 100.0f, imgRect.top + 50.0f ), pRedBrush_,
+				D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_NATURAL);
+			help.clear();
+		}
 	}
 }
+
+
 
 // Invoke DW's DrawText and DrawTextLayout to put our text
 // on the display.
 void ViewDW::drawDW(){
 #ifdef DEBUG_GB
-log(L"ViewDW::drawDW() ");
+// log(L"ViewDW::drawDW() ");
 #endif
 										//WPARAM wParam,   LPARAM lParam
 	SendMessage( mainHandle, WM_SIZE, Pages[pageNumber].mode,  pageNumber );
@@ -1260,25 +1488,18 @@ log(L"ViewDW::drawDW() ");
 	if (SUCCEEDED(CreateDeviceResources()))
 	{
 		HRESULT hr = S_OK;
+
 		setPageSize(pageNumber);
-		setLeftRightLayout(pageNumber);
 
 		SafeRelease(&m_pBitmap);
 
 		pRT_->BeginDraw(); 
 
-		// Set background color to paperColor		
-		pRT_->FillRectangle(&paperRect, pPaperBrush_);
+		if( bDrawPage ){
 
-		if( bMainMenu) setMenuText(Pages[pageNumber].mode);
-		if (bDrawMenu)
-		{
-			if( Pages[pageNumber].mode == constants::dW_dW ) drawMenu( rtSize.width/2.0f );
-			else drawMenu( rtSize.width );
-		}
+			setLeftRightLayout(pageNumber);
+			pRT_->FillRectangle(&paperRect, pPaperBrush_);
 
-		if( pageNumber >= 0 && pageNumber < numberOfPages )
-		{
 			if( Pages[pageNumber].mode == constants::gL_gL ) return;
 			if( Pages[pageNumber].mode == constants::dW_dW ||
 				Pages[pageNumber].mode == constants::dW_gL )
@@ -1287,7 +1508,7 @@ log(L"ViewDW::drawDW() ");
 				if (Pages[pageNumber].images) drawPageImages(pageNumber, constants::LEFT_PAGE);
 				pRT_->DrawTextLayout( leftPageOrigin, pLeftLayout_, pBookTextBrush_ );
 			}
-			if( Pages[pageNumber].mode == constants::dW_dW)
+			if( Pages[pageNumber].mode == constants::dW_dW  )
 			{
 				if( pageNumber + 1 < numberOfPages && 
 					Pages[pageNumber + 1 ].mode != constants::gL_gL)
@@ -1299,6 +1520,18 @@ log(L"ViewDW::drawDW() ");
 				}
 			}
 		}
+
+		pRT_->FillRectangle(&menuRect, pPaperBrush_);
+		if (bMainMenu) setMenuText(Pages[pageNumber].mode);
+		if (bDrawMenu)
+		{
+
+			if (Pages[pageNumber].mode == constants::dW_dW) drawMenu(rtSize.width / 2.0f);
+			else drawMenu(rtSize.width);
+		}
+
+//		drawEquation(); // under construction
+
 		if (D2DERR_RECREATE_TARGET == pRT_->EndDraw()) DiscardDeviceResources();
 	} //End if (SUCCEEDED( CreateDeviceResources())
 	return;
@@ -1311,10 +1544,11 @@ void ViewDW::setMenuCell(int x, int y){
 	if (y > 2 && y < constants::menuHeight &&
 		x < (dwWidth - 5) && x > 0)
 	{
-		if (x < 5) { iMenuCell = -1; return; }
-		else { iMenuCell = (x / menuCellWidth); return; }
+		if (x < 50) { iMenuCell = -1; return; }
+		else { iMenuCell = ((x - 50 )/ menuCellWidth); return; }
 	}
-	else iMenuCell = -1;
+
+	else iMenuCell = -1; // mouse is out of menu
 }
 
 // Set flag, bDrawMenu, to draw or remove the main
@@ -1334,6 +1568,7 @@ int ViewDW::mouseMove( int x, int y ){
 	{
 //		log(L"ViewDW::mouseMove iMenuCell > -1");
 		bDrawMenu = TRUE;
+ // 		if( bFileMenu == FALSE) bDrawPage = FALSE;
 		InvalidateRect( dwHandle, NULL, FALSE );
 		return 0;
 	}
@@ -1343,10 +1578,19 @@ int ViewDW::mouseMove( int x, int y ){
 	if( bMainMenu == TRUE && bDrawMenu == TRUE)
 	{
 		bDrawMenu = FALSE;
-		InvalidateRect( dwHandle, NULL, FALSE );
+		InvalidateRect(dwHandle, NULL, FALSE);
 		return 0;
 	}
 
+	// if mouse is out of the menu check for links
+	if (iMenuCell < 0)  // Mouse is out of the menu
+	{
+		bLeftButtonDown = FALSE;
+		if (y > constants::pageTop && x > constants::pageMargin)
+		{
+			checkForLink(x, y);
+		}
+	}
 	// Mouse is out of sub-menu; do nothing
 	return 0;
 	
@@ -1354,7 +1598,7 @@ int ViewDW::mouseMove( int x, int y ){
 
 void ViewDW::keyDown(int key, LPARAM lParam){
 #ifdef DEBUG_GB 
-	log(L"ViewDW::lkeyDown(int key = %i, LPARAM lParam = %i)",key ,lParam );
+//	log(L"ViewDW::lkeyDown(int key = %i, LPARAM lParam = %i, %i)",key , HIWORD(lParam), LOWORD(lParam));
 #endif
 	
 	if( bMainMenu )
@@ -1369,20 +1613,37 @@ void ViewDW::keyDown(int key, LPARAM lParam){
 		{ lButtonDown(0, 0, constants::COVER); return; }
 		if( key == VK_F1 )
 		{ lButtonDown(0, 0, constants::FILE); return; }
+		if (key == 'C')
+		{ lButtonDown(0, 0, constants::COLOR); return; }
+		if (key == 'P' )
+		{ lButtonDown(0, 0, constants::PAGE); return; }
+		if (key == 'H')
+		{ lButtonDown(0, 0, constants::HELP); return; }
+		if (key == 'N') 
+		{ lButtonDown(0, 0, constants::NUMBER); return; }
+	}
 
+	if( bNumberMenu ) // Check for page menu chars; 0 - 9, backspace, enter
+	{
+		getUserNumber( key );
+		return;	
 	}
 	if( bPageMenu ) // Check for page menu chars; 0 - 9, backspace, enter
 	{
-		//  enter		backspace
-		if( key == 13 || key == 8){ getChar(key); return; }
-		// digit 0 thro 9
-		if( key > 47 && key < 58 ){ getChar(key); return; }
+		getPageNumber( key );
 		return;
 	}
-	if( bFileMenu )
-	{ 
-		if( key == VK_F1 ){ lButtonDown(0, 0, constants::LOAD); return; }
+
+	if( bFileMenu ) {
+		if( key == 'R') { lButtonDown(0, 0, constants::RELOAD); return; }
+		if( key == 'L') { lButtonDown(0, 0, constants::LOAD); return; }
+		if( key == 'C') { lButtonDown(0, 0, constants::CANCEL); return; }
+
 	}
+
+	if( ViewDW::bColorMenu && key == 'C' )
+		{ lButtonDown(0, 0, constants::COLOR); return; } 
+
 	return;
 }
 
@@ -1392,29 +1653,146 @@ void ViewDW::Display(glm::vec4* color) {
 	//	Win::log(L"color.rgba =  %f  %f  %f  %f", color.r, color.g, color.b, color.a);
 //	float colorFromGL = *color;
 
-	glm::vec4 colorFromGL = *color;
+//	glm::vec4 colorFromGL = *color;
+	colorFromGL = *color;
+//	Win::log(L"ViewDW::Display colorFromGL =  %f  ", colorFromGL.r);
+	lButtonDown(50, 50, 1);
 
-//	Win::log(L"ViewDW::Display colorFromGL =  %f  ", colorFromGL);
-
-	Win::log(L"ViewDW::Display colorFromGL =  %f  ", colorFromGL.r);
 }
 
 //void ViewDW::Wrapper_To_Call_Display(void* pt2Object, float* color) {
 void ViewDW::Wrapper_To_Call_Display(void* pt2Object, glm::vec4* color) {
 
-	// explicitly cast to a pointer to ViewDW
-	ViewDW* mySelf = (ViewDW*)pt2Object;
+	// Explicitly cast to a pointer to ViewDW
+	// We are instantiating another ViewDW object here
+	// it will have it's own ctor, dtor, and data members.
+	// This is the reason for making ViewDW::bColorMenu and
+	// ViewDW::menuText{}; static members
+	ViewDW* mySelf = (ViewDW*)pt2Object; 
 
 	// call member
 	mySelf->Display(color);
+
 }
+
+// Checks for mouse hits on hyperlinks and Qlinks.
+// If it is just a mousemove over the link it changes
+// the cursor to a hand.  For hyperlinks it also underlines
+// the link.
+// If it is a LeftButtonDown:
+//		it opens the hyperlink in a browser.
+//      or, if a Qlink;  calls viewGL->hello_From_DW() 
+void ViewDW::handleHitTest(int x, int y, int page){
+	DWRITE_HIT_TEST_METRICS hitTestMetrics{ 0 };
+	BOOL isTrailingHit{ 0 };
+	BOOL isInside{ 0 };
+	DWRITE_TEXT_RANGE textRange{ 0 };
+	IUnknown* X = NULL;
+//	std::wstring link;
+	int checkPage{};
+	linkIndex = -1;
+
+	bCallGL = FALSE;
+
+	if (page == constants::LEFT_PAGE) checkPage = pageNumber;
+	else if (page == constants::RIGHT_PAGE) checkPage = pageNumber + 1;
+ 
+	if (page == constants::LEFT_PAGE) {
+		pLeftLayout_->HitTestPoint( (FLOAT)x - leftPageOrigin.x, (FLOAT)y - leftPageOrigin.y,
+			&isTrailingHit, &isInside, &hitTestMetrics);
+		pLeftLayout_->GetDrawingEffect(hitTestMetrics.textPosition, &X, &textRange);
+	}
+	else if (page == constants::RIGHT_PAGE) {
+		pRightLayout_->HitTestPoint((FLOAT)x - rightPageOrigin.x,(FLOAT)y - rightPageOrigin.y,
+			&isTrailingHit, &isInside, &hitTestMetrics);
+		pRightLayout_->GetDrawingEffect(hitTestMetrics.textPosition, &X, &textRange);
+	}
+
+// Check for Hyperlink hit.
+	if (X == pHyperLinkBrush_){
+		if( bLeftButtonDown ){
+			link.clear();
+			link.append(Pages[checkPage].text, textRange.startPosition,
+			textRange.length);
+			ShellExecute(0, 0, (LPWSTR)link.c_str(), 0, 0, SW_SHOWNA);
+			bLeftButtonDown = FALSE; }
+		else {  // this is a mouse move
+			SetCursor(LoadCursor(NULL, IDC_HAND));
+			for (int i = 0; i < Pages[checkPage].links; i++) {
+				if (Pages[checkPage].linkRange[i].startPosition == textRange.startPosition) {
+					linkIndex = i;
+
+					// Set the underline
+					bDrawPage = TRUE;
+					InvalidateRect(dwHandle, NULL, FALSE); }}
+		}
+		bHitflag  = TRUE;
+	}
+
+// Check for Qlink hit.
+	else if( X == pQlinkBrush_ ){
+		SetCursor(LoadCursor(NULL, IDC_HAND));
+		for (int i = 0; i < Pages[checkPage].qlinks; i++) {
+			if (Pages[checkPage].qlinkRange[i].startPosition == textRange.startPosition) {
+			//	qlinkIndex = i;
+			}
+		}
+		if( bLeftButtonDown ){
+		//	log(L"webhave a Qlink = %i", qlinkIndex);
+			bLeftButtonDown = FALSE;
+			link.clear();
+			link.append( Pages[checkPage].text, textRange.startPosition,
+				textRange.length );
+			log(link);
+		    viewGL->hello_From_DW( userInt, link, 1 );
+		}
+	}
+
+	SafeRelease(&X);
+
+// Remove the underline when mouse goes out of link
+// but don't invalidate for every mousemove.  
+
+	if ((linkIndex < 0 ) && (bHitflag == TRUE))
+	{    
+		bHitflag = FALSE;
+		log(L"if ((linkIndex < 0 ) && (bHitflag == TRUE)) linkIndex = %i", linkIndex );
+		bDrawPage = TRUE;
+		InvalidateRect(dwHandle, NULL, FALSE);
+	}
+}
+
+// If there are links on the page; call handleHitTest
+void ViewDW::checkForLink(UINT x, UINT y) {
+
+// Mouse is in left page
+if (Pages[pageNumber].mode == constants::dW_gL || 
+(Pages[pageNumber].mode == constants::dW_dW && (FLOAT)x < paperRect.right / 2.0f))
+	{ 
+		if (Pages[pageNumber].links > 0 ||
+			Pages[pageNumber].qlinks > 0) handleHitTest(x, y, constants::LEFT_PAGE);
+        return;
+	}
+// Mouse is in right page
+	if (Pages[pageNumber].mode == constants::dW_dW && (FLOAT)x > rightPageOrigin.x)
+	{
+		// Don't go last page!
+		if( pageNumber + 1 < numberOfPages ){
+			if (Pages[pageNumber + 1].links > 0 ||
+				Pages[pageNumber + 1].qlinks > 0 ) handleHitTest( x, y, constants::RIGHT_PAGE);
+		}
+	}
+	return;
+}
+
+
 
 // We use this for mouse clicks and keyboard shortcuts for the 
 // same menu items as the mouse menu. If item == -1 its a mouse click
 // if its from the keys item will be the iMenuCell for the item
 int ViewDW::lButtonDown(int x, int y, int item){
 #ifdef DEBUG_GB 
-	log(L"ViewDW::lButtonDown(int x = %i , int y = %i, item = %i)", x, y, item);
+//	log(L"ViewDW::lButtonDown(int x = %i , int y = %i, item = %i)", x, y, item);
 #endif
 
 	// Set iMenuCell to the cell the mouse is in
@@ -1422,20 +1800,35 @@ int ViewDW::lButtonDown(int x, int y, int item){
 	if( item == -1 ) setMenuCell(x,y);  // Mouseclick
 	else iMenuCell = item;	// Keyboard input
 	
-	if( iMenuCell < 0 ) return 0;
+	// mouse is out of menu: check for links hit.
+	if( iMenuCell < 0 ){ 
+		bLeftButtonDown = TRUE;
+		checkForLink( x,  y);
+		return 0;}  
 
+//log(L"ViewDW::lButtonDown(iMenuCell = %i)", iMenuCell);
 // Check for clicks in the main menu.	
-	if( bMainMenu )
-	{
-		log(L"ViewDW::lButtonDownif( bMainMenu ) iMenuCell = %i", iMenuCell);
-
+	if( bMainMenu ){
 // Handle Sub-Menu Requests
 		if( iMenuCell == constants::FILE )
 		{
 			bFileMenu = TRUE;
 			bMainMenu = FALSE;
 			bDrawMenu = TRUE;
+			bDrawPage = FALSE;
 			setMenuText( constants::FILE );
+			InvalidateRect(dwHandle, NULL, FALSE);
+			return 0;
+		}
+
+		if (iMenuCell == constants::NUMBER)
+		{
+		//	log(L"ViewDW::lButtonDown(iMenuCell = %i)", iMenuCell);
+			bNumberMenu = TRUE;
+			bMainMenu = FALSE;
+			bDrawMenu = TRUE;
+			bDrawPage = FALSE;
+			setMenuText(constants::SET_POUND_SIGN);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
@@ -1445,6 +1838,7 @@ int ViewDW::lButtonDown(int x, int y, int item){
 			bPageMenu = TRUE;
 			bMainMenu = FALSE;
 			bDrawMenu = TRUE;
+			bDrawPage = FALSE;
 			setMenuText(constants::SET_QUESTION_MARK);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
@@ -1453,12 +1847,12 @@ int ViewDW::lButtonDown(int x, int y, int item){
 		if( iMenuCell == constants::COLOR 
 			&& Pages[pageNumber].mode == constants::dW_gL)
 		{
-			// 	bColorMenu == TRUE will flag this call - 
-			// viewGL->hello_From_DW(99);  in ViewDW::setPageSize
-			bColorMenu = TRUE;
+			ViewDW::bColorMenu = TRUE;
 			bMainMenu = FALSE;
 			bDrawMenu = TRUE;
+			bDrawPage = FALSE;
 			setMenuText(constants::COLOR);
+			viewGL->hello_From_DW(constants::PALETTE, dummy, 0);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
@@ -1467,18 +1861,17 @@ int ViewDW::lButtonDown(int x, int y, int item){
 		{
 			bDrawMenu = FALSE;
 			openDW_file(iMenuCell);
+			viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
 		//  Handle Page Requests 
 		if( iMenuCell == constants::PRIOR && pageNumber > 0)
 		{
-
 			--pageNumber;
-
 			if (Pages[pageNumber + 1].mode == constants::gL_gL &&
 				Pages[pageNumber].mode == constants::gL_gL) {
-				viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
+				viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 				// We are going from a gL_gL mode window to a gL_gL mode window:
 				// This is all openGL rendering no need to InvalidateRect 
 				return 0;
@@ -1499,8 +1892,11 @@ int ViewDW::lButtonDown(int x, int y, int item){
 			if (item == -1 ) bDrawMenu = TRUE;
 
 			// This is from the KB so don't draw the menu
-			else bDrawMenu = FALSE;
-			log(L"ViewDW::lButtonDown(iMenuCell == constants::PRIOR)");
+			else{ bDrawMenu = FALSE;
+		//	log(L"ViewDW::lButtonDown(iMenuCell == constants::PRIOR)");
+			}
+			bDrawPage = TRUE;
+			viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
@@ -1512,7 +1908,7 @@ int ViewDW::lButtonDown(int x, int y, int item){
 			++pageNumber;
 			if (Pages[pageNumber - 1].mode == constants::gL_gL &&
 				Pages[pageNumber].mode == constants::gL_gL) {
-				viewGL->hello_From_DW(Pages[pageNumber].glRoutine);
+				viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 				bDrawMenu = FALSE;
 				return 0;
 			}
@@ -1529,6 +1925,8 @@ int ViewDW::lButtonDown(int x, int y, int item){
 
 			// This is from the KB so don't draw the menu
 			else bDrawMenu = FALSE;
+			bDrawPage = TRUE;
+			viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
@@ -1548,6 +1946,8 @@ int ViewDW::lButtonDown(int x, int y, int item){
 			}
 			pageNumber = 0;
 			bDrawMenu = FALSE;
+			bDrawPage = TRUE;
+			viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 			InvalidateRect(dwHandle, NULL, FALSE);	
 			return 0;
 		}
@@ -1567,6 +1967,8 @@ int ViewDW::lButtonDown(int x, int y, int item){
 			}
 			pageNumber = tableOfContents;
 			bDrawMenu = FALSE;
+			bDrawPage = TRUE;
+			viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
@@ -1583,6 +1985,8 @@ int ViewDW::lButtonDown(int x, int y, int item){
 			}
 			pageNumber = indexPage;
 			bDrawMenu = FALSE;
+			bDrawPage = TRUE;
+			viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
@@ -1599,6 +2003,8 @@ int ViewDW::lButtonDown(int x, int y, int item){
 			}
 			pageNumber = numberOfPages - 1;
 			bDrawMenu = FALSE;
+			bDrawPage = TRUE;
+			viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 			InvalidateRect(dwHandle, NULL, FALSE);
 			return 0;
 		}
@@ -1614,23 +2020,59 @@ int ViewDW::lButtonDown(int x, int y, int item){
 		{
 			bFileMenu = FALSE;
  			bMainMenu = TRUE;
+			bDrawPage = TRUE;
 			openDW_file( iMenuCell );
+			viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
 			InvalidateRect( dwHandle, NULL, FALSE );
 			return 0;
 		}
 		return 0; // Clicked an inactive cell; do nothing.
 	}
 
-	if (bColorMenu)
-	{
-		bColorMenu = FALSE;
-		bMainMenu = TRUE;
-		InvalidateRect(dwHandle, NULL, FALSE);
-		return 0;
+	if( ViewDW::bColorMenu )
+	{		
+		if (iMenuCell == constants::COLOR){
+			ViewDW::bColorMenu = FALSE;
+			bMainMenu = TRUE;
+			viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
+		}
+
+		else if(iMenuCell == 1)
+		{
+			std::wstring temp{};
+			temp.clear();
+			temp = L"R ";
+			temp.append(std::to_wstring(colorFromGL.r), 0, 3);
+			ViewDW::menuText[1] = temp;
+
+			temp.clear();
+			temp = L"G ";
+			temp.append(std::to_wstring(colorFromGL.g), 0, 3);
+			ViewDW::menuText[2] = temp;
+
+			temp.clear();
+			temp = L"B ";
+			temp.append(std::to_wstring(colorFromGL.b), 0, 3);
+			ViewDW::menuText[3] = temp;
+
+			temp.clear();
+			temp = L"A ";
+			temp.append(std::to_wstring(colorFromGL.a), 0, 3);
+			ViewDW::menuText[4] = temp;
+
+		}
+		bDrawPage = FALSE;
+		bDrawMenu = TRUE;
+		InvalidateRect(dwHandle, NULL, FALSE);		
 	}
 	return 0;
 } // End lButtonDown(...
 
+
+//  This is a hack to prevent a loss of ID2D1HwndRenderTarget* pRT_;
+//  when transitioning out of gL_gL mode.  The dwWin has zero size in
+//  gL_gL mode then does not like the mouse in the client area on resizing
+//  to a finite size.
 void ViewDW::moveTheCursor(){
 
 	RECT clientRect;
@@ -1641,9 +2083,11 @@ void ViewDW::moveTheCursor(){
 	SetCursorPos(pt.x, pt.x);
 }
 
+// This can fail when transitioning out of gL_gL mode if the mouse is in
+// the client area.  void ViewDW::moveTheCursor(){ is used to prevent this. 
 int ViewDW::size( int width, int height ){
 #ifdef DEBUG_GB
-	log(L"ViewDW::size %ix%i", width, height );
+//	log(L"ViewDW::size %ix%i", width, height );
 #endif
 
 	dwWidth = width;
@@ -1656,6 +2100,8 @@ int ViewDW::size( int width, int height ){
 		}
 	}
 
+	bDrawPage = TRUE;
+	bCallGL= FALSE;
 	InvalidateRect( dwHandle, NULL, FALSE );	
 	return 0;
 }
@@ -1665,7 +2111,7 @@ int ViewDW::size( int width, int height ){
 void ViewDW::setMenuText( int parameter )
 {
 #ifdef DEBUG_GB
-	log(L"void ViewDW::setMenuText( parameter = %i)", parameter );
+//	log(L"void ViewDW::setMenuText( parameter = %i)", parameter );
 #endif
 
 	if(bMainMenu){
@@ -1681,9 +2127,9 @@ void ViewDW::setMenuText( int parameter )
 		if (Pages[pageNumber].mode == constants::dW_gL) menuText[8] = L"Color";
 		else menuText[8]  = L"  ";
 		menuText[9]  = L" ";
-		menuText[10]  = L" ";
-		menuText[11]  = L"Help";
-		menuText[12]  = L"Find";
+		menuText[10] = L"Help";
+		menuText[11] = L"Number";
+		menuText[12] = L" ";
 		return;
 	}
 	if(bFileMenu){
@@ -1721,17 +2167,36 @@ void ViewDW::setMenuText( int parameter )
 		return;
 	}
 
-	if (bColorMenu) {
-		log(L"void ViewDW::setMenuText(bColorMenu)");
+	if (bNumberMenu) {
+			log(L"void ViewDW::setMenuText( parameter = %i)", parameter );
 		menuText[0] = L" ";
-		menuText[1] = L" ";
+		if (parameter == constants::SET_POUND_SIGN) menuText[1] = L"#";
+		else menuText[1] = to_wstring(parameter);
 		menuText[2] = L" ";
 		menuText[3] = L"  ";
 		menuText[4] = L" ";
 		menuText[5] = L" ";
 		menuText[6] = L" ";
 		menuText[7] = L" ";
-		menuText[8] = L"Exit Color Menu";
+		menuText[8] = L" ";
+		menuText[9] = L" ";
+		menuText[10] = L" ";
+		menuText[11] = L" ";
+		menuText[12] = L" ";
+		return;
+	}
+
+	if( ViewDW::bColorMenu ){
+		log(L"void ViewDW::setMenuText(bColorMenu)");
+		menuText[0] = L" ";
+		menuText[1] = L"Red";
+		menuText[2] = L"Green";
+		menuText[3] = L"Blue";
+		menuText[4] = L"Alpha ";
+		menuText[5] = L" ";
+		menuText[6] = L" ";
+		menuText[7] = L" ";
+		menuText[8] = L"Cancel";
 		menuText[9] = L" ";
 		menuText[10] = L" ";
 		menuText[11] = L" ";
@@ -1751,7 +2216,7 @@ HRESULT ViewDW::LoadBitmapFromFile(
 	ID2D1Bitmap **ppBitmap)
 {
 #ifdef DEBUG_GB
-	log(L"ViewDW::LoadBitmapFromFile( )");
+//	log(L"ViewDW::LoadBitmapFromFile( )");
 #endif
 	IWICBitmapDecoder *pDecoder = NULL;
 	IWICBitmapFrameDecode *pSource = NULL;
@@ -1772,6 +2237,7 @@ HRESULT ViewDW::LoadBitmapFromFile(
 		// Create the initial frame.
 		hr = pDecoder->GetFrame(0, &pSource);
 	}
+
 
 	if (SUCCEEDED(hr))
 	{

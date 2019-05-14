@@ -61,7 +61,7 @@ LRESULT CALLBACK Win::windowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         break;
 
     case WM_SIZE:
-		Win::log("in winProc rcvd WM_SIZE");
+	//	Win::log("in winProc rcvd WM_SIZE");
 	//  Windows will send this when we resize, max or min the window.
 	//	ViewDW will send this when changing the graphics mode or the OGL routine.
 	//  The graphics mode will be in wParam GL_MODE = 40007, DW_MODE = 40012
@@ -81,7 +81,7 @@ LRESULT CALLBACK Win::windowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         }
 
     case WM_PAINT:
-		Win::log("winProc WM_PAINT");			
+	//	Win::log("winProc WM_PAINT");			
         ctrl->paint();
         returnValue = ::DefWindowProc(hwnd, msg, wParam, lParam);
         break;
@@ -111,12 +111,14 @@ LRESULT CALLBACK Win::windowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 //  ****************  KEYBOARD MESSAGES **************************
 
 	case WM_KEYDOWN:  // these go to ControllerMain 
-		Win::log("winProc( .. case WM_KEYDOWN:");
+	 //	Win::log("winProc( LOWORD(wParam) = %i   HIWORD(wParam) = %i ",LOWORD(wParam), HIWORD(wParam));
+		//Win::log("winProc( LOWORD(lParam) = %i   HIWORD(lParam) = %i ", LOWORD(lParam), HIWORD(lParam));
+
 		returnValue = ctrl->keyDown(static_cast<int>( wParam), lParam);		
 		break;
 
     case WM_SYSKEYDOWN:  // ControllerMain sends this to ControllerDW when user hit Enter
-		Win::log("winProc( .. case WM_SYSKEYDOWN:");
+	//	Win::log("winProc( .. case WM_SYSKEYDOWN:");
         returnValue = ctrl->keyDown(28, lParam);  // keyCode, 
         break;
 

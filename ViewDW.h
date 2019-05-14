@@ -32,6 +32,19 @@ namespace dwConst{
 
 namespace Win{
 
+	struct Equation{
+		std::wstring s;
+		D2D1_POINT_2F xyPoint;
+	};
+
+	struct EquationString{
+		int numStrings;
+		std::wstring s;
+		DWRITE_TEXT_METRICS metrics;
+		int type;
+		int subType;
+	};
+
 	struct BookPage{ 
 		int mode;
 		int glRoutine;
@@ -42,6 +55,10 @@ namespace Win{
 		std::vector<DWRITE_TEXT_RANGE> boldRange;
 		int ulines;
 		std::vector<DWRITE_TEXT_RANGE> ulineRange;
+		int links;
+		std::vector<DWRITE_TEXT_RANGE> linkRange;
+		int qlinks;
+		std::vector<DWRITE_TEXT_RANGE> qlinkRange;
 		int names;
 		std::vector<int> fontNumbers;
 		std::vector<DWRITE_TEXT_RANGE> fontNameRange;
@@ -55,8 +72,9 @@ namespace Win{
 
     class ViewDW{
     public:
+		ViewDW();
 		ViewDW(ViewGL* viewGL);
-		ViewDW(){} // Need this for our callback interface to work
+//		ViewDW(){} // Need this for our callback interface to work
 		~ViewDW();
 
 		// This is our callback (from ViewGL) interface 
@@ -73,8 +91,8 @@ namespace Win{
 		void ReadUTF16(const std::wstring &filename);
 		void parseText();
 		int readFontTable();
-		void checkFormatBlocks();
 		void countFormatBlocks();
+		void reportFormatError(int page, int index, std::wstring temp);
 		void setTextRanges(int pageIndex, int wordIndex);
 		void drawDW();
 		HRESULT CreateDeviceResources();
@@ -87,13 +105,17 @@ namespace Win{
 		void drawPageNumber(int pageNumber, int side);
 		void drawPageImages(int pageNumber, int side);
 		void DiscardDeviceResources();
-//		void WriteUTF16();
 		int mouseMove(int x, int y);
 		int lButtonDown(int x, int y, int item);
+		void checkForLink(UINT x, UINT y); // look for links in the page.
+		void handleHitTest(int x, int y, int page);
 		void moveTheCursor();
 		void keyDown(int key, LPARAM lParam);
 		void setMenuCell(int x, int y);
-		void getChar(WPARAM findChar);
+		void getPageNumber(WPARAM findChar);
+		int getNumber(WPARAM findChar);
+		void getUserNumber(WPARAM findChar);
+
 		HRESULT LoadBitmapFromFile(
 			ID2D1RenderTarget *pRenderTarget,
 			IWICImagingFactory *pIWICFactory,
@@ -103,6 +125,8 @@ namespace Win{
 			ID2D1Bitmap **ppBitmap);
 
     private:
+
+	int instanceID;
 
 // ctor and create
 	ViewGL* viewGL;
@@ -120,10 +144,16 @@ namespace Win{
 	IDWriteTextLayout* pRightLayout_;
 	IDWriteTextFormat* pMenuFormat_;
 	IDWriteTextLayout* pMenuLayout_;
+	IDWriteTextFormat* pMathFormat_;
+	IDWriteTextLayout* pMathLayout_;
+
+	float mathFontSize;
 
     ID2D1Factory* pD2DFactory_;
     ID2D1HwndRenderTarget* pRT_;
 	ID2D1SolidColorBrush* pRedBrush_;
+	ID2D1SolidColorBrush* pHyperLinkBrush_;
+	ID2D1SolidColorBrush* pQlinkBrush_;
     ID2D1SolidColorBrush* pPaperBrush_;
     ID2D1SolidColorBrush* pBookTextBrush_;
     ID2D1SolidColorBrush* pMenuBrush_;
@@ -133,6 +163,7 @@ namespace Win{
 	std::wstring activeFile;
 	std::wstring reload_Filename;
 	std::wstring book;
+	std::wstring dummy;
 
 // Image loading
 	IWICImagingFactory* m_pWICFactory;  // for image files
@@ -154,8 +185,9 @@ namespace Win{
 
 // Book size factors
 	std::vector<BookPage> Pages;
-	int numberOfPages;	// Number of pages in the book
-	int pageNumber;	// Page to display
+	int currentPage; // Page being displayed.
+	int numberOfPages;	// Number of pages in the book.
+	int pageNumber;	// Page to display.
 
 // Page size factors
 	float fpageWidth;
@@ -163,6 +195,7 @@ namespace Win{
 
 	D2D1_SIZE_F rtSize;
 	D2D1_RECT_F paperRect;
+	D2D1_RECT_F menuRect;
 	D2D1_POINT_2F leftPageOrigin;
 	D2D1_POINT_2F rightPageOrigin;
 
@@ -171,24 +204,39 @@ namespace Win{
 	D2D1_RECT_F pnumRightRect;
 	D2D1_RECT_F pnumLeftRect;
 
-
 // Format block stuff
 	int fbCount;
 	std::wstring fbChange;
 
 // Menu FLAGS
-	bool bDrawMenu;		// Display Menu
+	bool bDrawPage;
+	bool bDrawMenu;
+	bool bCallGL;
 	bool bMainMenu;  
 	bool bFileMenu;
 	bool bPageMenu;
-	bool bColorMenu;
+	bool bNumberMenu;
+		int userInt;  // These are what the
+		float userFloat; // User entered in the number menu.
+
+// Hyperlink and Qlink flags
+	int linkIndex;
+	// int qlinkIndex;
+	std::wstring link;
+	bool bLeftButtonDown;
+	bool bHitflag;
 
 // Menu variables
-	std::vector<std::wstring> menuText;
 	int iMenuCell;
 	float menuCellWidth;
+	float menuFontSize;
 	int indexPage;
 	int tableOfContents;
+	static std::vector<std::wstring> menuText;
+
+// Color Menu
+	static bool bColorMenu;
+	glm::vec4 colorFromGL;
 
     };//  end class ViewDW
 }// End namespace Win

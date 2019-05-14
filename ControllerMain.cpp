@@ -35,7 +35,7 @@ glWidth(0)
 } 
 
 int ControllerMain::keyDown(int key, LPARAM lParam){
-	log(L"ControllerMain::keyDown( key = %i LOWORD = %i HIWORD = %i)", key, LOWORD(lParam),  HIWORD(lParam));
+//	log(L"ControllerMain::keyDown( key = %i LOWORD = %i HIWORD = %i)", key, LOWORD(lParam),  HIWORD(lParam));
 	ctrlGL->keyDown(key, lParam);
 	ctrlDW->keyDown(key, lParam);
 	return 0;
@@ -95,7 +95,7 @@ int ControllerMain::create(HWND hwnd)
 //	SendMessage( mainHandle, WM_SIZE, Pages[pageNumber].mode,  pageNumber );
 int ControllerMain::size( int x, int y, WPARAM wParam ){
 #ifdef DEBUG_GB
-log(L"ControllerMain::size() x = %i y = %i  wParam = %i", x, y, wParam);
+//log(L"ControllerMain::size() x = %i y = %i  wParam = %i", x, y, wParam);
 #endif
 
 	static float aspectRatio(0.5f);
@@ -119,8 +119,16 @@ log(L"ControllerMain::size() x = %i y = %i  wParam = %i", x, y, wParam);
 	clientHeight = clientRect.bottom - clientRect.top;
 
 	// Set child windows	
-	dwWidth = aspectRatio*clientWidth;
+	dwWidth = static_cast<int>(aspectRatio*clientWidth);
 	glWidth = clientWidth - dwWidth;
+
+// This is a hack to keep from losing the mouse when 
+// going out of gL_gL 
+	if(wParam == constants::gL_gL) {
+		dwWidth = 2;
+	}
+
+
 	::SetWindowPos(glHandle, 0, dwWidth, 0, glWidth, clientHeight, SWP_NOZORDER);
 	::SetWindowPos(dwHandle, 0, 0, 0, dwWidth, clientHeight, SWP_NOZORDER);
 

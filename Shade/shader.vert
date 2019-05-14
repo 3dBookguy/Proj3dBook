@@ -10,7 +10,7 @@ smooth out vec4 theColor;
 uniform int routineNumber;
 uniform mat4 projectionMatrix;
 uniform mat4 PVM;
-uniform mat4 rotate;
+uniform mat4 turnTable;
 // Moving triangle vert offsets.
 uniform vec2 offset;
 uniform vec3 offset2;
@@ -37,8 +37,9 @@ void main()
 		}
 		case 3:
 		{
-			vec4 totalOffset = vec4(offset.x, offset.y, 0.0, 0.0);
-			gl_Position = position + totalOffset;
+//			vec4 totalOffset = vec4(offset.x, offset.y, 0.0, 0.0);
+//			gl_Position = position + totalOffset;
+			gl_Position = turnTable*position;
 			theColor = color;
 			break;
 		}
@@ -56,6 +57,21 @@ void main()
 			theColor = color;
 			break;
 		}
+
+		case 8:
+		{
+		    gl_Position = position;
+			theColor = color;
+			break;
+		} 
+		case 9:
+		{
+//		    gl_Position = position;
+			theColor = color;
+			gl_Position = turnTable*position;
+			break;
+		} 
+
 		case 10:
 		{	
 			gl_Position = PVM*position;
@@ -71,17 +87,46 @@ void main()
 		} 
 		case 12:
 		{	
-			gl_Position = rotate*position;
+			gl_Position = turnTable*position;
 			theColor = color;
 			break;
 		}
 		case 14:
 		{	
-			gl_Position = position;
+			gl_Position = turnTable*position;;
 		    theColor = color;
 			break;
 		}
-
+		case 15:
+		{	
+			gl_Position = turnTable*position;;
+		    theColor = color;
+			break;
+		}
+		case 16:
+		{	
+			gl_Position = turnTable*position;;
+		    theColor = color;
+			break;
+		}
+		case 17:
+		{	
+			gl_Position = turnTable*position;;
+		    theColor = color;
+			break;
+		}
+		case 18:
+		{	
+			gl_Position = turnTable*position;;
+		    theColor = color;
+			break;
+		}
+		case 99:
+		{	
+			gl_Position = position;;
+		    theColor = color;
+			break;
+		}
 		default:
 		{
 			gl_Position = position;

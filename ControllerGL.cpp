@@ -29,8 +29,6 @@ int ControllerGL::create(HWND hwnd){ // handle WM_CREATE
 #endif
 
 	view->create( hwnd);
-
-
     return 0;
 }
 
@@ -38,8 +36,8 @@ int ControllerGL::paint(){ return 0; } // handle WM_PAINT
 int ControllerGL::command(int id, int cmd, LPARAM msg) { return 0; } // handle 
 int ControllerGL::keyDown(int key, LPARAM lParam)
 { 
-	model->rotateParams(key);
-//	view->keyBoardInput(key);
+	model->keyDown(key);
+	view->keyDown(key);
 	return 0; 
 
 }
@@ -64,7 +62,7 @@ int ControllerGL::mouseWheel(int state, int delta, int x, int y){
 
 int ControllerGL::lButtonDown(WPARAM state, int x, int y){
 #ifdef DEBUG_GB
-	log(L"ControllerGL::lButtonDown(WPARAM state, int x = %i, int y = %i)", x,y);
+//	log(L"ControllerGL::lButtonDown(WPARAM state, int x = %i, int y = %i)", x,y);
 #endif
 
 	view->leftButtonDown( x, y);
@@ -118,7 +116,7 @@ int ControllerGL::mouseMove(WPARAM state, int x, int y){
 
 int ControllerGL::size(int w, int h, WPARAM wParam){ // handle WM_SIZE
 #ifdef DEBUG_GB
-	log(L"ControllerGL::size(int x = %i  y  = %i  )", w,  h);
+//	log(L"ControllerGL::size(int x = %i  y  = %i  )", w,  h);
 #endif
     view->resizeWindow(w, h);
 //    Win::log(L"OpenGL window is resized: %dx%d.", w, h);

@@ -10,7 +10,6 @@
 
 #include "Controller.h"    
 #include "ViewDW.h"
-// #include "ModelGL.h"
 
 namespace Win
 {

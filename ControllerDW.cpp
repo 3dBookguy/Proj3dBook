@@ -8,8 +8,10 @@
 //#include <process.h>       // for _beginthreadex()  why was this here?
 #include "ControllerDW.h"
  #include "resource.h"
+#include "constants.h"
 #include "Log.h"
 #include "ViewDW.h"
+
  #define DEBUG_GB
 using namespace Win;
 
@@ -28,7 +30,7 @@ int ControllerDW::create(HWND hwnd) // handle WM_CREATE
 int ControllerDW::size(int w, int h, WPARAM wParam )
 {
 #ifdef DEBUG_GB
-	log(L"ControllerDW::size(int x = %i  y  = %i  )", w,  h);
+//	log(L"ControllerDW::size(int x = %i  y  = %i  )", w,  h);
 #endif
 
 	view->size( w,  h);
@@ -38,7 +40,7 @@ int ControllerDW::size(int w, int h, WPARAM wParam )
 int ControllerDW::paint() // This function added psl 3 - 18 -14
 {
 #ifdef DEBUG_GB
-	 log(L"ControllerDW::paint()");
+//	 log(L"ControllerDW::paint()");
 #endif
 	view->drawDW();
 	return 0;
@@ -48,37 +50,47 @@ int ControllerDW::mouseMove(WPARAM state, int x, int y){
 #ifdef DEBUG_GB
 //	log(L"ControllerDW::mouseMove(WPARAM state = %i, int x = %i , int y = %i)", state, x, y);
 #endif
-	view->mouseMove( x,  y );
-	return 0;
+
+	//  Mouse is NOT in the menu, Ex. Hyperlinks, Qlinks,
+	//  but in the page,
+	//if (y > constants::pageTop && x > constants::pageMargin)
+	//{
+	//	view->mouseNotInMenu(x, y); return 0;
+	//}
+
+	view->mouseMove(x, y); return 0;
 }
 
 int ControllerDW::getChar(WPARAM message){
 #ifdef DEBUG_GB
-log(L"int ControllerDW::keyDown(int key= %i, LPARAM lParam )", message);
+//log(L"int ControllerDW::keyDown(int key= %i, LPARAM lParam )", message);
 #endif
 
-	view->getChar(message);
 	return 0;
+//	view->getChar(message); return 0;
 }
 
 //  (WPARAM state, int x, int y
 int ControllerDW::keyDown(int key, LPARAM lParam){
 #ifdef DEBUG_GB
-log(L"int ControllerDW::keyDown(int key= %i, LPARAM lParam )", key);
+//log(L"int ControllerDW::keyDown(int key= %i, LPARAM lParam )", key);
 #endif
 
-	view->keyDown( key, lParam);
-	return 0;
+	view->keyDown( key, lParam); return 0;
 }
 
 int ControllerDW::lButtonDown(WPARAM state, int x, int y){
 #ifdef DEBUG_GB
-log(L"ControllerDW::lButtonDown(WPARAM state =%i, x = %i, y = %i)", state,  x,  y);
+//log(L"ControllerDW::lButtonDown(WPARAM state =%i, x = %i, y = %i)", state,  x,  y);
 #endif
 
-	if( y > MENU_HEIGHT ) return 0;  // mouse is out of menu do nothing 
-	view->lButtonDown(x, y, -1);
-	return 0;
+	//  Mouse clicks NOT in the menu, Ex. Hyperlinks, Qlinks,
+	//  but in the page,
+	//if( y > constants::pageTop && x > constants::pageMargin)	
+	//{ view->mouseNotInMenu( x, y); return 0; }
+
+	//  Mouse clicks in the menu.
+	view->lButtonDown(x, y, -1);	return 0;
 }
 
 int ControllerDW::rButtonDown(WPARAM state, int menu, int menuItem){ 
@@ -86,8 +98,7 @@ int ControllerDW::rButtonDown(WPARAM state, int menu, int menuItem){
 log(L"ControllerDW::rButtonDown(WPARAM state, int x, int y))", state,  menu, menuItem);
 #endif
 
-	view->openDW_file( 0 );
-	return 0;
+	view->openDW_file( 0 ); return 0;
 }
 
 
