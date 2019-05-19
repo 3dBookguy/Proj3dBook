@@ -141,9 +141,9 @@ namespace Win
 		void pentagonalFace(Triangle *&T);
 		void faces(Triangle *&T);
 		void tetrahedron(Triangle *&T);
-		void octahedron(Triangle *&T);
+		void octahedron(Triangle *&T, int step);
 		void icosahedron(Win::Triangle *&T);
-		void dodecahedron(Win::Triangle *&T);
+		void dodecahedron(Win::Triangle *&T, int step);
 		void exampleSubData( Win::Triangle(&triVerts)[2]);
 		void rectangle( Win::Rectangle &rect );
 		void prism( Win::Vertex(&inSpec)[5], Win::Triangle(&outTri)[8]);

@@ -6,7 +6,7 @@ Handles calls from ViewGL for rendering data.
 
 */
 
-#define DEBUG_GB
+//#define DEBUG_GB
 
 #include "Log.h"
 #include "ModelGL.h"
@@ -154,11 +154,15 @@ void ModelGL::equilateralFace( Triangle *&T) {
 // n - The Triangles/Edge count of the grid is sent in as T[0].v[0].xyzw.x. 
 // The color is sent in T[0].v[0].rgba.
 // The grid is normalized to side = 1.0f
-void ModelGL::pentagonalFace( Triangle *&T) {
+void ModelGL::pentagonalFace( Triangle *&T ) {
+
 
 	int N = static_cast<int>(T[0].v[0].xyzw.x);
 	int step = static_cast<int>(T[0].v[0].xyzw.y);
 	if (N <= 0) return;
+
+//	log(L"ModelGL::pentagonalFace, N = %i,  step = %i", N, step);
+
 
 // Create F0  -  First we get an equilateral grid	
 	equilateralFace(T);
@@ -202,10 +206,12 @@ void ModelGL::pentagonalFace( Triangle *&T) {
 // n -  is sent in as T[0].v[0].xyzw.x. 
 // The color is sent in T[0].v[0].rgba.
 // The edge length is normalized to 1.
-void ModelGL::dodecahedron(Win::Triangle *&T){
+void ModelGL::dodecahedron(Win::Triangle *&T, int step){
 
 	int N = static_cast<int>(T[0].v[0].xyzw.x);
-	int step = static_cast<int>(T[0].v[0].xyzw.y);
+//	log(L"ModelGL::dodecahedron, N = %i,  step = %i", N, step);
+
+//	int step = static_cast<int>(T[0].v[0].xyzw.y);
 	if (N <= 0) return;
 
 // F0 --- First Face
@@ -431,13 +437,13 @@ void ModelGL::icosahedron(Win::Triangle *&T){
 // n -  is sent in as T[0].v[0].xyzw.x. 
 // The color is sent in T[0].v[0].rgba.
 // The edge length is normalized to 1.
-void ModelGL::octahedron(Triangle *&T){
+void ModelGL::octahedron(Triangle *&T, int step){
 
 	int N = static_cast<int>(T[0].v[0].xyzw.x);
-	int step = static_cast<int>(T[0].v[0].xyzw.y);
+//	int step = static_cast<int>(T[0].v[0].xyzw.y);
 	if (N <= 0) return;
 
-		log(L"ModelGL::octahedron, N = %i,  step = %i", N, step);
+//		log(L"ModelGL::octahedron, N = %i,  step = %i", N, step);
 
 	// F0 --- First Face
 	equilateralFace(T);
@@ -571,7 +577,7 @@ void ModelGL::tetrahedron(Triangle *&T){
 	int step = static_cast<int>(T[0].v[0].xyzw.y);
 	if (N <= 0) return;
 
-	log(L"ModelGL::tetrahedron, N = %i,  step = %i", N, step);
+//	log(L"ModelGL::tetrahedron, N = %i,  step = %i", N, step);
 
 // F0 --- First Face
 	equilateralFace(T);
@@ -1127,9 +1133,9 @@ void ModelGL::prism(Vertex(&specs)[5], Triangle(&tri)[8]) {
 		{
 			glm::vec4 color = specs[i].rgba;
 			tri[i].v[j].rgba = color;
-			//	tri[i].v[j].rgba = specs[i].rgba;
-			Win::log(L"tri[%i].v[%i].rgbd = %f  %f  %f  %f ", i, j, tri[i].v[j].rgba.r,
-				tri[i].v[j].rgba.g, tri[i].v[j].rgba.b, tri[i].v[j].rgba.a);
+				tri[i].v[j].rgba = specs[i].rgba;
+	//		//Win::log(L"tri[%i].v[%i].rgbd = %f  %f  %f  %f ", i, j, tri[i].v[j].rgba.r,
+			//	tri[i].v[j].rgba.g, tri[i].v[j].rgba.b, tri[i].v[j].rgba.a);
 
 			tri[i].v[j].xyzw.w = 1.0f;
 		}
@@ -1325,7 +1331,7 @@ void ModelGL::rectangle( Win::Rectangle &R ) {
 // R[0] front, R[1] back, R[2] top, R[3] bottom, R[4] right ,R[5] left
 void ModelGL::box(Win::Rectangle(&R)[6]) {
 
- log(L" ModelGL::box(Win::Rectangle(&R)[6])");
+ //log(L" ModelGL::box(Win::Rectangle(&R)[6])");
 
 	float x = R[0].T[0].v[0].xyzw.x;
 	float y = R[0].T[0].v[0].xyzw.y;

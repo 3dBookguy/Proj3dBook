@@ -110,10 +110,16 @@ namespace Win
 		UINT xCells;
 		UINT yCells;
 
-		GLint n;  // Input for mesh functions
-		GLuint step;
-		GLuint numberOfTriangles;
-		GLuint triangleCount;
+		//GLint n;  // Input for mesh functions
+		//GLuint step;
+		//GLuint numberOfTriangles;
+		//GLuint triangleCount;
+
+		int n;  // Input for mesh functions
+		int step;
+		int numberOfTriangles;
+		int triangleCount;
+
 
 		GLuint uiVBO[25];	// Buffer handles
 		GLuint uiVAO[10];	// Array handles

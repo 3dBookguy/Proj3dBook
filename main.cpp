@@ -37,7 +37,7 @@ int mainMessageLoop(HACCEL hAccelTable=0);
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdShow)
 {
-	Win::logMode(Win::LOG_MODE_BOTH); // other mode is (Win::LOG_MODE_BOTH) LOG_MODE_DIALOG;
+	Win::logMode(Win::LOG_MODE_DIALOG); // other modes are LOG_MODE_FILE (Win::LOG_MODE_BOTH) LOG_MODE_DIALOG;
 
 	// Instantiate our MVCs
 	Win::ModelGL modelGL; 

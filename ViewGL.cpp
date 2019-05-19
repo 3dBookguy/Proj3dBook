@@ -4,7 +4,7 @@
 // View component of 3dBook-Reader OpenGL window
 //
 ///////////////////////////////////////////////////////////////////////////////
-#define DEBUG_GB
+//#define DEBUG_GB
 
 #pragma comment(lib, "opengl32.lib")
 #pragma comment(lib, "glu32.lib")
@@ -74,7 +74,7 @@ shFragment.LoadShader("C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\Shade\\
 //void Win::ViewGL::DoItA(void* pt2Object, void(*pt2Function)(void* pt2Object, float* color)){
 	void Win::ViewGL::DoItA(void* pt2Object, void(*pt2Function)(void* pt2Object, glm::vec4* color)) {
 
-	Win::log(L"Win::ViewGL::DoItA");
+//	Win::log(L"Win::ViewGL::DoItA");
 	//float myFloat;
 	//myFloat = paletteColor.r;
 	//pt2Function(pt2Object, &myFloat); // make callback
@@ -272,7 +272,7 @@ void ViewGL::clear(int run) {
 void ViewGL::palette(int run) {
 	if (!run)
 	{
-		Win::log(L"void ViewGL::palette ");
+//		Win::log(L"void ViewGL::palette ");
 		Win::Rectangle colorPalette[1331];
 		model->colorPalette(colorPalette);
 		routineLocation = glGetUniformLocation(uiProg,
@@ -311,7 +311,7 @@ void ViewGL::equilateralFace(int run){
 	static UINT triangles = 0;
 	if (!run)
 	{
-		Win::log(L"ViewGL::equilateralFace(int run) ");
+//		Win::log(L"ViewGL::equilateralFace(int run) ");
 		triangles = 0;
 		//      n*n = triangles/face
 		//		3*n*n =  verts/face
@@ -376,7 +376,7 @@ void ViewGL::pentagonalFace(int run){
 	static UINT triangles = 0;
 	if (!run)
 	{
-		Win::log(L"ViewGL::pentagonFace(int run) ");
+//		Win::log(L"ViewGL::pentagonFace(int run) step = %i ", step);
 		triangles = 0;
 
 		//      n*n = triangles/face
@@ -607,6 +607,7 @@ void ViewGL::dodecahedron(int run){
 
 	if (!run)
 	{
+//		Win::log(L"ViewGL::dodecahedron(int run) step = %i ", step);
 		numberOfTriangles = 60*n*n;  // 12 faces x 5*n*n/face 
 		Win::Triangle *T = new Win::Triangle[numberOfTriangles + 1]{};
 //		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
@@ -618,11 +619,11 @@ void ViewGL::dodecahedron(int run){
 
 		// Specify number of cells / face
 		T[0].v[0].xyzw.x = static_cast<float>(n);
-		T[0].v[0].xyzw.y = static_cast<float>(step);
+	//	T[0].v[0].xyzw.y = static_cast<float>(step);
 
 		T[0].v[0].rgba = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
 
-		model->dodecahedron(T);
+		model->dodecahedron(T, step);
 		model->setMsize(0.5f);
 
 		routineLocation = glGetUniformLocation(uiProg, "routineNumber");
@@ -816,14 +817,14 @@ void ViewGL::octahedron(int run){
 	if (!run)
 	{
 
-	//	log(L"ViewGL::octahedron, n = %i,  step = %i", n, step);
+//		log(L"ViewGL::octahedron, n = %i,  step = %i", n, step);
 		triangles = 0;
 		numberOfTriangles = 8*n*n;
 		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
 
 		// Specify number of cells / face
 		T[0].v[0].xyzw.x = static_cast<float>(n);
-		T[0].v[0].xyzw.y = static_cast<float>(step);
+	//	T[0].v[0].xyzw.y = static_cast<float>(step);
 
 		// Specify the mesh color
 		// T[0].v[0].rgba = glm::vec4(.8f, 0.0f, 1.0f, 1.0f);
@@ -831,7 +832,7 @@ void ViewGL::octahedron(int run){
 
 		if( step == 7 ) T[0].v[0].rgba = glm::vec4(1.0f, 0.7f, 0.8f, 1.0f);
 
-		model->octahedron(T);
+		model->octahedron(T, step);
 		model->setMsize(0.5f);
 
 		routineLocation = glGetUniformLocation(uiProg, "routineNumber");
@@ -900,7 +901,7 @@ void ViewGL::tetrahedron(int run) {
 		numberOfTriangles = 4*n*n;
 		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
 
-		log(L"ViewGL::tetrahedron, n = %i,  step = %i", n, step);
+	//	log(L"ViewGL::tetrahedron, n = %i,  step = %i", n, step);
 
 		// Specify number of cells / face
 		T[0].v[0].xyzw.x = static_cast<float>(n);
@@ -1316,7 +1317,7 @@ void ViewGL::rectangle(int run) {
 
 void ViewGL::hello_From_DW(int routine, std::wstring& link, int source)
 {
-	Win::log(L"ViewGL::hello_From_DW routine = %i  source = %i", routine, source);
+//	Win::log(L"ViewGL::hello_From_DW routine = %i  source = %i", routine, source);
 
 	count = -1;
 
@@ -1326,7 +1327,7 @@ void ViewGL::hello_From_DW(int routine, std::wstring& link, int source)
 	}
 
 	if (source == 1) {
-		log(link);		
+	//	log(link);		
 		if( link == L"rectangular box" ) {glRoutineNumber = 3; triangleCount = 12;  return; }
 		if (link == L"equilateral") { glRoutineNumber = 16;  return; }
 		if (link == L"equilateralFace"){ glRoutineNumber = 17;
@@ -1355,7 +1356,11 @@ void ViewGL::hello_From_DW(int routine, std::wstring& link, int source)
 		if (link == L"octahedron F0") { glRoutineNumber = 20; n = routine; step = 0;  return; }
 		if (link == L"octahedron P0") { glRoutineNumber = 20; n = routine; step = 1;  return;}
 		if (link == L"P0 rotate") { glRoutineNumber = 20; n = routine; step = 2;  return; }
-		if (link == L"P0 copy") { glRoutineNumber = 20; n = routine; step = 3;  return; }
+		if (link == L"P0 copy") { 
+			
+			glRoutineNumber = 20; n = routine; step = 3; 
+				//	log(L"P0 copy, n = %i,  step = %i", n, step);
+			return; }
 		if (link == L"P0 P1 copy") { glRoutineNumber = 20; n = routine; step = 4;  return; }
 		if (link == L"tex1") { glRoutineNumber = 20; n = routine; step = 5;  return; }
 		if (link == L"tex2") { glRoutineNumber = 20; n = routine; step = 6;  return; }
@@ -1371,7 +1376,12 @@ void ViewGL::hello_From_DW(int routine, std::wstring& link, int source)
 		if (link == L"scale it symmetrically"){ glRoutineNumber = 27; n = routine; step = 2;  return; }
 		if (link == L"rotate/copies"){ glRoutineNumber = 27; n = routine; step = 3;  return; }
 		if (link == L"sin(π/5)/2"){ glRoutineNumber = 28; n = routine; step = 4;  return; }
-		if (link == L"3π/5"){ glRoutineNumber = 28; n = routine; step = 5;  return; }
+		if (link == L"3π/5"){
+
+			glRoutineNumber = 28; n = routine; step = 5; 
+		//	Win::log(L"ViewGL::3pi/5  step = %i", step);
+		
+			return; }
 		if (link == L"Rotating F1"){ glRoutineNumber = 28; n = routine; step = 6;  return; }
 		if (link == L"translate-rotate P0"){ glRoutineNumber = 28; n = routine; step = 7;  return; }
 		if (link == L"three faces forming a vertex"){ glRoutineNumber = 28; n = routine; step = 8;  return; }

@@ -12,7 +12,7 @@
 #include <streambuf>
 #include "constants.h"
 
-#define DEBUG_GB // Activate the log file
+//#define DEBUG_GB // Activate the log file
 
 // SafeRelease inline function .		
 template <class T> inline void SafeRelease(T **ppT)
@@ -1076,7 +1076,7 @@ void ViewDW::setTextLayout(int pageIndex, int side){
 // writes the entered string to userFloat = stof(number);
 // or userInt = std::stol(number, nullptr, 10);
 int ViewDW::getNumber(WPARAM charCode){
-	log(L"void ViewDW::getNumber( WPARAM charCode = %i", charCode);
+	//log(L"void ViewDW::getNumber( WPARAM charCode = %i", charCode);
 
 	static std::wstring number{};
 
@@ -1122,15 +1122,15 @@ int ViewDW::getNumber(WPARAM charCode){
 				userInt = std::stol(number, nullptr, 10);
 				//userInt = stoi(number);
 				userFloat = 0.0f;
-				log(L"int i_number = %i ", userInt);
+			//	log(L"int i_number = %i ", userInt);
 				number.clear();
 				return constants::HAVE_USER_INT;
 			}
 			else{ userFloat = std::stof(number, nullptr);
-				log(L"int f_number = %f ", userFloat);
+			//	log(L"int f_number = %f ", userFloat);
 				userFloat = stof(number); 
 				userInt = 0;
-				log(L"int f_number = %f ", userFloat);
+			//	log(L"int f_number = %f ", userFloat);
 				number.clear();
 				return constants::HAVE_USER_FLOAT;
 			}
@@ -1743,7 +1743,7 @@ void ViewDW::handleHitTest(int x, int y, int page){
 			link.clear();
 			link.append( Pages[checkPage].text, textRange.startPosition,
 				textRange.length );
-			log(link);
+		//	log(link);
 		    viewGL->hello_From_DW( userInt, link, 1 );
 		}
 	}
@@ -1756,7 +1756,7 @@ void ViewDW::handleHitTest(int x, int y, int page){
 	if ((linkIndex < 0 ) && (bHitflag == TRUE))
 	{    
 		bHitflag = FALSE;
-		log(L"if ((linkIndex < 0 ) && (bHitflag == TRUE)) linkIndex = %i", linkIndex );
+	//	log(L"if ((linkIndex < 0 ) && (bHitflag == TRUE)) linkIndex = %i", linkIndex );
 		bDrawPage = TRUE;
 		InvalidateRect(dwHandle, NULL, FALSE);
 	}
@@ -2168,7 +2168,7 @@ void ViewDW::setMenuText( int parameter )
 	}
 
 	if (bNumberMenu) {
-			log(L"void ViewDW::setMenuText( parameter = %i)", parameter );
+	//		log(L"void ViewDW::setMenuText( parameter = %i)", parameter );
 		menuText[0] = L" ";
 		if (parameter == constants::SET_POUND_SIGN) menuText[1] = L"#";
 		else menuText[1] = to_wstring(parameter);
@@ -2187,7 +2187,7 @@ void ViewDW::setMenuText( int parameter )
 	}
 
 	if( ViewDW::bColorMenu ){
-		log(L"void ViewDW::setMenuText(bColorMenu)");
+//		log(L"void ViewDW::setMenuText(bColorMenu)");
 		menuText[0] = L" ";
 		menuText[1] = L"Red";
 		menuText[2] = L"Green";
