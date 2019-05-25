@@ -4,7 +4,8 @@
 // View component of 3dBook-Reader OpenGL window
 //
 ///////////////////////////////////////////////////////////////////////////////
-//#define DEBUG_GB
+
+#define DEBUG_GB
 
 #pragma comment(lib, "opengl32.lib")
 #pragma comment(lib, "glu32.lib")
@@ -34,7 +35,10 @@ ViewGL::ViewGL(ModelGL* model):
 	bLineFrame(FALSE),
 	bPointFrame(FALSE),
 	n(1),
-	triangleCount(0){}
+	triangleCount(0)
+{
+	paletteColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+}
 
 ViewGL::~ViewGL(){ }
 
@@ -43,22 +47,31 @@ void ViewGL::create(HWND hwnd){
 	log(L"ViewGL::create((HWND hwnd)");
 #endif
 	glWinHandle = hwnd;
+
+	char path[MAX_PATH];
+	GetCurrentDirectoryA(MAX_PATH, path);
+	workDir = path;
+
+ 	log(L"ViewGL::create((HWND hwnd) CurrentDirectory is ...");
+	log(path);
+
     return;
 }
 
-bool ViewGL::hookUpShaders(){ // initialize OpenGL states and scene
+bool ViewGL::hookUpShaders(){ 
 
-// Note: The relative path is not the same for running in VS and from taskbar
-// so we use the explicit path here
+	std::string shadeFile = workDir;
+	shadeFile.append("\\Shade\\shader.vert");
+	shVertex.LoadShader(shadeFile, GL_VERTEX_SHADER);
 
-shVertex.LoadShader("C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\Shade\\shader.vert", GL_VERTEX_SHADER);
-shFragment.LoadShader("C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\Shade\\shader.frag", GL_FRAGMENT_SHADER);
-// shVertex.LoadShader("..\\shaders\\shader.vert", GL_VERTEX_SHADER);
-// shFragment.LoadShader("..\\shaders\\shader.frag", GL_FRAGMENT_SHADER);
+	shadeFile.clear();
+	shadeFile = workDir;
+	shadeFile.append("\\Shade\\shader.frag");
 
-//	Proj3dBook\\src\\Shade\\shader.frag
-//	shVertex.LoadShader(".\\Shade\\shader.vert", GL_VERTEX_SHADER);
-//	shFragment.LoadShader(".\\Shade\\shader.frag", GL_FRAGMENT_SHADER);
+	shFragment.LoadShader(shadeFile, GL_FRAGMENT_SHADER);
+
+	//shVertex.LoadShader(".\\Shade\\shader.vert", GL_VERTEX_SHADER);
+	//shFragment.LoadShader(".\\Shade\\shader.frag", GL_FRAGMENT_SHADER);
 
 	spMain.CreateProgram();
 	uiProg = spMain.GetProgramID();
@@ -72,7 +85,7 @@ shFragment.LoadShader("C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\Shade\\
 }
 
 //void Win::ViewGL::DoItA(void* pt2Object, void(*pt2Function)(void* pt2Object, float* color)){
-	void Win::ViewGL::DoItA(void* pt2Object, void(*pt2Function)(void* pt2Object, glm::vec4* color)) {
+void Win::ViewGL::DoItA(void* pt2Object, void(*pt2Function)(void* pt2Object, glm::vec4* color)) {
 
 //	Win::log(L"Win::ViewGL::DoItA");
 	//float myFloat;
@@ -85,7 +98,6 @@ shFragment.LoadShader("C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\Shade\\
 
 	pt2Function(pt2Object, &paletteColor);
 }
-
 
 void Win::ViewGL::Callback_Using_Argument()
 {
@@ -118,7 +130,7 @@ void Win::ViewGL::leftButtonDown(int x, int y)
 	static bool bToggle = TRUE;
 // Let user pick a color from void ViewGL::palette(int run)
 	if( glRoutineNumber == constants::PALETTE ){
-		RECT rc;
+		RECT rc = {0,0,0,0};
 		GetClientRect(glWinHandle, &rc);
 		model->returnColor( x, y, rc.right, rc.bottom, paletteColor);
 //		Win::log(L"color.rgba =  %f  %f  %f  %f", paletteColor.r, paletteColor.g, paletteColor.b, paletteColor.a);
@@ -317,7 +329,7 @@ void ViewGL::equilateralFace(int run){
 		//		3*n*n =  verts/face
 
 		numberOfTriangles =  n*n;
-		Win::Triangle *T = new Win::Triangle[n*n]{};
+		Win::Triangle *T = new Win::Triangle[n*n]();
 
 		// Specify number of cells / face
 		T[0].v[0].xyzw.x =  static_cast<float>(n);
@@ -383,7 +395,7 @@ void ViewGL::pentagonalFace(int run){
 		//		3*n*n =  verts/face
 
 		numberOfTriangles =  5*n*n;
-		Win::Triangle *T = new Win::Triangle[5*n*n]{};
+		Win::Triangle *T = new Win::Triangle[5*n*n];
 
 		// Specify number of cells / face
 		T[0].v[0].xyzw.x =  static_cast<float>(n);
@@ -446,7 +458,7 @@ void ViewGL::faces(int run) {
 		inc = 0;
 		n = 6;
 		numberOfTriangles = 6*n*n;
-		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
+		Win::Triangle *T = new Win::Triangle[numberOfTriangles];
 
 		// Specify number of cells / face
 		T[0].v[0].xyzw.x = static_cast<float>(n);
@@ -489,7 +501,7 @@ void ViewGL::faces(int run) {
 	glBindVertexArray(uiVAO[0]);
 //	float angle = mConst::pi - acos(1.0f/3.0f); // Tetrahedron - three faces
 
-	float angle{}; 
+	float angle= 0.0f; 
 	if (step == 2) angle = mConst::tetDiComp;   // Tetrahedron - 3 faces
 	if( step == 3 ) angle = mConst::octDiComp;  // octahedron - 4 faces
 	if (step == 4) angle = mConst::icosaDiComp; // icosahedron - 5 faces
@@ -609,7 +621,7 @@ void ViewGL::dodecahedron(int run){
 	{
 //		Win::log(L"ViewGL::dodecahedron(int run) step = %i ", step);
 		numberOfTriangles = 60*n*n;  // 12 faces x 5*n*n/face 
-		Win::Triangle *T = new Win::Triangle[numberOfTriangles + 1]{};
+		Win::Triangle *T = new Win::Triangle[numberOfTriangles + 1];
 //		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
 //		Stick on an axis of symmetry
 		T[numberOfTriangles].v[0].xyzw.z  = 1.5f; T[numberOfTriangles].v[0].xyzw.a  = 1.0f;
@@ -646,7 +658,7 @@ void ViewGL::dodecahedron(int run){
 		// Draw illustration for axial angle.
 		if( step == 8 ){
 
-			Win::Line L[4]{};
+			Win::Line L[4];
 
 			float axAng = asin((2.0f/3.0f)*mConst::sinThirdPi/tan(mConst::pi/5.0f));
 			float z = -sin(mConst::pi/5.0f )*cos(axAng);
@@ -729,7 +741,7 @@ void ViewGL::icosahedron(int run){
 	if (!run)
 	{
 		numberOfTriangles = 20*n*n;
-		Win::Triangle *T = new Win::Triangle[numberOfTriangles + 1]{};
+		Win::Triangle *T = new Win::Triangle[numberOfTriangles + 1];
 //		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
 //		Using the last triangle to draw a Z axis 
 		T[numberOfTriangles].v[0].xyzw.z  = 1.5f; T[numberOfTriangles].v[0].xyzw.a  = 1.0f;
@@ -820,7 +832,7 @@ void ViewGL::octahedron(int run){
 //		log(L"ViewGL::octahedron, n = %i,  step = %i", n, step);
 		triangles = 0;
 		numberOfTriangles = 8*n*n;
-		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
+		Win::Triangle *T = new Win::Triangle[numberOfTriangles];
 
 		// Specify number of cells / face
 		T[0].v[0].xyzw.x = static_cast<float>(n);
@@ -899,7 +911,7 @@ void ViewGL::tetrahedron(int run) {
 	{
 		triangles = 0;
 		numberOfTriangles = 4*n*n;
-		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
+		Win::Triangle *T = new Win::Triangle[numberOfTriangles];
 
 	//	log(L"ViewGL::tetrahedron, n = %i,  step = %i", n, step);
 
@@ -982,7 +994,7 @@ void ViewGL::cubeMesh(int run) {
 //		3*2*n*n = 6n*n = verts/face
 
    		numberOfTriangles = 12*n*n;
-		Rectangle *R = new Rectangle[6*n*n]{};
+		Rectangle *R = new Rectangle[6*n*n];
 		
 		// Specify number of cells / face
 		R[0].T[0].v[0].xyzw.x = static_cast<float>(n);
@@ -1048,7 +1060,7 @@ void ViewGL::grid(int run) {
 		if(step == 2) yCells = n;
 		else yCells = 5;
 		numberOfTriangles = 6*xCells*yCells;
-		Rectangle *R = new Rectangle[ xCells*yCells ]{};
+		Rectangle *R = new Rectangle[ xCells*yCells ];
 	 	R[0].T[0].v[0].xyzw.x = static_cast<float>(xCells);
 		R[0].T[0].v[0].xyzw.y = static_cast<float>(yCells);
 		R[0].T[0].v[0].rgba  = glm::vec4(0.4f, 0.4f, 0.3f, 1.0f);
@@ -1082,7 +1094,7 @@ void ViewGL::grid(int run) {
 // A fixed set of coordinate axes.
 void ViewGL::xyzAxes() {
 
-	Win::Line L[3]{};
+	Win::Line L[3];
 	model->xyzAxes(L);
 	glBindVertexArray(uiVAO[2]);
 	glBindBuffer(GL_ARRAY_BUFFER, uiVBO[1]);
@@ -1102,7 +1114,7 @@ void ViewGL::xyzAxes() {
 // out of the display and disappear from view.   
 void ViewGL::tripod(float scale){ 
 
-	Win::Line axes[3]{};
+	Win::Line axes[3];
 
 	axes[0].v[0].xyzw = mConst::origin4v;
 	axes[1].v[0].xyzw = mConst::origin4v;
@@ -1140,7 +1152,7 @@ void ViewGL::equilateral(int run) {
 
 	if (!run)
 	{
-		Win::Triangle T{};
+		Win::Triangle T;
 		// specify the color .
 		T.v[0].rgba = glm::vec4(0.2f, 0.1f, 0.5f, 1.0f);
 		model->equilateral(T);
@@ -1194,7 +1206,7 @@ void ViewGL::box(int run) {
 //	static UINT triangles = 0;
 	if (!run)
 	{
-		Win::Rectangle R[6]{};
+		Win::Rectangle R[6];
 		// specify the dimensions of our box.
 		R[0].T[0].v[0].xyzw = glm::vec4(0.6f, 0.6f, 1.2f, 1.0f);
 
@@ -1277,7 +1289,7 @@ void ViewGL::rectangle(int run) {
 	if (!run)
 	{
 		
-		Win::Rectangle R{};
+		Win::Rectangle R;
 
 		R.T[0].v[0].xyzw = glm::vec4(0.5f, 0.25f, 0.0f, 0.0f);
 		R.T[0].v[0].rgba = glm::vec4(0.7f, 0.4f, 0.1f, 1.0f);

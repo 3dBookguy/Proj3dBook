@@ -16,34 +16,15 @@
 #include <commdlg.h>
 #include <wincodec.h> // needed for IWICImagingFactory* 
 #include <d2d1.h>
-#include <d2d1_3.h>
+//#include <d2d1_3.h>
 #include <dwrite.h>
-#include <dwrite_3.h>
+//#include <dwrite_3.h>
 #include <string>
 #include <vector>
 
 #include "ViewGL.h"
 
-namespace dwConst{
-
-	const std::wstring imageFilePath = L"C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\images\\";
-
-}
-
 namespace Win{
-
-	struct Equation{
-		std::wstring s;
-		D2D1_POINT_2F xyPoint;
-	};
-
-	struct EquationString{
-		int numStrings;
-		std::wstring s;
-		DWRITE_TEXT_METRICS metrics;
-		int type;
-		int subType;
-	};
 
 	struct BookPage{ 
 		int mode;
@@ -126,29 +107,25 @@ namespace Win{
 
     private:
 
+//  instanceID = 1 for viewGL,  
+//  instanceID = 2 for ViewDW* mySelf used in callback impl.
 	int instanceID;
 
-// ctor and create
+//  So we can call viewGL's methods
 	ViewGL* viewGL;
+
 	HWND  dwHandle;
 	HWND  mainHandle;  // Used in SendMessage to change window mode
 
-// Init
-	float dpiScaleX_;
-	float dpiScaleY_;
-	int dwWidth;
-
+//  DirectWrite
 	IDWriteFactory* pDWriteFactory_;
 	IDWriteTextFormat* pTextFormat_;
 	IDWriteTextLayout* pLeftLayout_;
 	IDWriteTextLayout* pRightLayout_;
 	IDWriteTextFormat* pMenuFormat_;
 	IDWriteTextLayout* pMenuLayout_;
-	IDWriteTextFormat* pMathFormat_;
-	IDWriteTextLayout* pMathLayout_;
 
-	float mathFontSize;
-
+//  D2D
     ID2D1Factory* pD2DFactory_;
     ID2D1HwndRenderTarget* pRT_;
 	ID2D1SolidColorBrush* pRedBrush_;
@@ -160,6 +137,7 @@ namespace Win{
 
 // File loading
 	OPENFILENAMEW ofn;
+	std::wstring workDir;
 	std::wstring activeFile;
 	std::wstring reload_Filename;
 	std::wstring book;
@@ -173,12 +151,17 @@ namespace Win{
 // Image Scaling
 	D2D1_SIZE_F maxClientSize;
 	D2D1_SIZE_F imageScale;
+	float imageScaleH;
+	float imageScaleV;
 
 // Font parsing
 	std::vector<std::wstring> fontNames;
 	std::wstring font;
 
 // Font Scaling
+	float dpiScaleX_;
+	float dpiScaleY_;
+	float resFactor;
 	float maxClientArea;
 	float pageArea;
 	float fontSizeFactor;
@@ -190,6 +173,7 @@ namespace Win{
 	int pageNumber;	// Page to display.
 
 // Page size factors
+	int dwWidth;
 	float fpageWidth;
 	float fpageHeight;
 
@@ -211,13 +195,14 @@ namespace Win{
 // Menu FLAGS
 	bool bDrawPage;
 	bool bDrawMenu;
-	bool bCallGL;
-	bool bMainMenu;  
-	bool bFileMenu;
-	bool bPageMenu;
+//	bool bCallGL;
+	static bool bMainMenu;  
+	static bool bFileMenu;
+	static bool bPageMenu;
 	bool bNumberMenu;
 		int userInt;  // These are what the
 		float userFloat; // User entered in the number menu.
+	static bool bColorMenu;
 
 // Hyperlink and Qlink flags
 	int linkIndex;
@@ -235,8 +220,8 @@ namespace Win{
 	static std::vector<std::wstring> menuText;
 
 // Color Menu
-	static bool bColorMenu;
-	glm::vec4 colorFromGL;
+
+	static glm::vec4 colorFromGL;
 
     };//  end class ViewDW
 }// End namespace Win

@@ -89,9 +89,9 @@ namespace Win
 
     private:
 		// Holds color picked from the palette
-		glm::vec4 paletteColor{};
+		glm::vec4 paletteColor;
 		int mouseX; int mouseY;
-		Triangle triangle[2]{};
+		Triangle triangle[2];
 
 // Render loop 
 		int windowWidth;
@@ -110,11 +110,6 @@ namespace Win
 		UINT xCells;
 		UINT yCells;
 
-		//GLint n;  // Input for mesh functions
-		//GLuint step;
-		//GLuint numberOfTriangles;
-		//GLuint triangleCount;
-
 		int n;  // Input for mesh functions
 		int step;
 		int numberOfTriangles;
@@ -131,7 +126,6 @@ namespace Win
 		const GLuint vec4_Size = 4;
 		// Stride for 2 vec4 attributes close packed.
 		const GLuint stride_2_vec4 = 32; 
-//		GLuint attribOffset;
 		const GLuint offset_1_vec4 = 16;
 		const GLuint offset_Zero  = 0;
 
@@ -160,6 +154,8 @@ namespace Win
 		// Handle to glWin;
 		HWND glWinHandle; 
 		ModelGL* model;
+
+		std::string workDir;
     };
 }
 

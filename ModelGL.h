@@ -8,16 +8,27 @@ Include file for ModelGL.cpp and ViewGL.cpp.
 #ifndef MODEL_GL_H
 #define MODEL_GL_H
 
+////needed to add this line to ModelGL.h   
+#define GLM_FORCE_RADIANS
+//
+////#include <glm/ext/matrix_transform.hpp>  
+//// try below instead of above
+//#include <glm/gtc/matrix_transform.hpp>
+
+
 #include <vector>
 #include <cmath>
 // ViewGL includes this file so we need 
 // glm matrix includes here.
 #include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
+//#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <glm/ext.hpp>
 #include <glm/matrix.hpp>
 //#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
 namespace mConst
 {
 // trig consts
@@ -161,16 +172,13 @@ namespace Win
 		void grid(Win::Rectangle *&rect);
 	private:
 
-		std::vector<glm::vec4> vertices;
+//		std::vector<glm::vec4> vertices;
 		Matrx Mem;
 
 		// color palette params
 		static const  UINT rows = 36;
 		static const  UINT cols = 37;
-		glm::vec4 colorArray[rows][cols]{};
-
-
-
+		glm::vec4 colorArray[rows][cols];
 	};
 }
 

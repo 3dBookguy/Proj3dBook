@@ -148,6 +148,10 @@
     <None Include="Shade\shader.frag" />
     <None Include="Shade\shader.vert" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="buildingt.txt" />
+    <Text Include="Notes.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

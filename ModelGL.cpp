@@ -310,7 +310,7 @@ void ModelGL::dodecahedron(Win::Triangle *&T, int step){
 
 // B1 --- copy/invert B0 to create B1 and the complete dodecahedron.
 
-	Win::Vertex swap{};
+	Win::Vertex swap;
 		for( int n = 0; n < 30*N*N; n++ ){
 			for( int i = 0; i < 3; i++ ){
 				T[n+ 30*N*N ].v[i] = -T[n].v[i];
@@ -406,7 +406,7 @@ void ModelGL::icosahedron(Win::Triangle *&T){
 	if (step == 5) return;
 
 //	Invert FL0
-	Win::Vertex swap{};
+	Win::Vertex swap;
 	for(int n = 0; n < 10*N*N; n++){
 		for(int i = 0; i < 3; i++){ // invert
 			T[n+10*N*N].v[i] = -T[n].v[i];
@@ -419,7 +419,7 @@ void ModelGL::icosahedron(Win::Triangle *&T){
 	if (step == 6) return;
 
 //	Spherify
-	float length_of_v{};
+	float length_of_v = {0.0f};
 	if (step == 7) {
 		for (int t = 0; t < 20 * N*N; t++) {
 				for (int v = 0; v < 3; v++) {
@@ -454,7 +454,7 @@ void ModelGL::octahedron(Triangle *&T, int step){
 	//const float octDi = acos( -1.0f/3.0f );
 
 	glm::mat4 Spin = glm::rotate(glm::mat4(1.0), -mConst::octDi, mConst::xaxis);
-	Win::Vertex swap{};
+	Win::Vertex swap;
 	for (int n = 0; n < N*N; n++) {
 		for (int i = 0; i < 3; i++) {
 			T[N*N + n].v[i].xyzw = Spin * T[n].v[i].xyzw;
@@ -528,7 +528,7 @@ void ModelGL::octahedron(Triangle *&T, int step){
 	}
 
 	//	Spherify
-	float length_of_v{};
+	float length_of_v;
 	if (step == 7) {
 		for (int t = 0; t < 8 * N*N; t++) {
 				for (int v = 0; v < 3; v++) {
@@ -586,7 +586,7 @@ void ModelGL::tetrahedron(Triangle *&T){
 	//The dihedral angle for the tetrahedron: acos(1/3).
 	float tetra_Dihedral = acos(1.0f/3.0f);
 	glm::mat4 Spin = glm::rotate(glm::mat4(1.0), -tetra_Dihedral, mConst::xaxis);
-	Win::Vertex swap{};
+	Win::Vertex swap;
 	for (int n = 0; n < N*N; n++) {
 		for (int i = 0; i < 3; i++) {
 			T[N*N + n].v[i].xyzw =  Spin*T[n].v[i].xyzw;
@@ -796,7 +796,7 @@ void ModelGL::cubeMesh(Win::Rectangle *&R) {
 		for (int v = 0; v < 3; v++) R[r + 3 * n*n].T[t].v[v] = -R[r].T[t].v[v]; }}
 
 	// Restore CW winding order
-	Win::Vertex temp{};
+	Win::Vertex temp;
 	for (int r = 3 * n*n; r < 6 * n*n; r++) { for (int t = 0; t < 2; t++) {
 	//	for (int v = 0; v < 3; v++) {
 	temp = R[r].T[t].v[1];  R[r].T[t].v[1] = R[r].T[t].v[2]; R[r].T[t].v[2] = temp;
@@ -804,7 +804,7 @@ void ModelGL::cubeMesh(Win::Rectangle *&R) {
 	}}
 
 //	Spherify
-	float length_of_v{};
+	float length_of_v = { 0.0f};
 	if( step == 1 ){
 		for (int r = 0; r < 6*n*n; r++){
 			for (int t = 0; t < 2; t++) {
@@ -933,7 +933,7 @@ void ModelGL::colorPalette(Win::Rectangle(&rect)[1331]){
 
 	int count(0); int row(0); int col(0);
 
-	glm::vec4 color{};
+	glm::vec4 color = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	for (int R = 0; R < 11; R++)
 	{
@@ -1186,7 +1186,7 @@ void ModelGL::rectangle( Win::Rectangle &R ) {
 	float z = spex.z / 2.0f;
 	float w = spex.w;
 
-	Win::Vertex v[3]{};
+	Win::Vertex v[3];
 
 	for (int j = 0; j < 3; j++)
 	{

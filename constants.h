@@ -13,7 +13,6 @@
 
 namespace constants
 {
-
 	enum MenuItem{ 
 	FILE = 0,	//0
 	RELOAD = 0, //0

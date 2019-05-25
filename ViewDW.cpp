@@ -12,7 +12,7 @@
 #include <streambuf>
 #include "constants.h"
 
-//#define DEBUG_GB // Activate the log file
+#define DEBUG_GB // Activate the log file
 
 // SafeRelease inline function .		
 template <class T> inline void SafeRelease(T **ppT)
@@ -24,8 +24,12 @@ using namespace std;// used for string functions
 using namespace Win;
 
 // Static color menu menbers
-bool ViewDW::bColorMenu = FALSE;
-std::vector<std::wstring> ViewDW::menuText{};
+bool ViewDW::bColorMenu = false;
+bool  ViewDW::bMainMenu = true;
+bool  ViewDW::bPageMenu = false;
+bool  ViewDW::bFileMenu = false;
+glm::vec4 ViewDW::colorFromGL = {0.0f, 0.0f,0.0f,0.0f};
+std::vector<std::wstring> ViewDW::menuText;
 
 // Constuctor for ViewDW* mySelf out Callback pointer
 ViewDW::ViewDW():instanceID(2){ log(L"In the constructor 2"); }
@@ -49,11 +53,10 @@ ViewDW::ViewDW(ViewGL* viewGL):
 
 // Menu Logic
 	bDrawPage(TRUE),
-	bCallGL(FALSE),
 	bDrawMenu(TRUE),
-	bMainMenu(TRUE),
-	bFileMenu(FALSE),
-	bPageMenu(FALSE),
+	//bMainMenu(TRUE),
+	//bFileMenu(FALSE),
+	//bPageMenu(FALSE),
 	bNumberMenu(FALSE),
 		userInt(0),
 		userFloat(0),
@@ -78,7 +81,6 @@ ViewDW::ViewDW(ViewGL* viewGL):
 // DirectWrite
     pTextFormat_(NULL),
 	pMenuLayout_(NULL),
-	pMathLayout_(NULL),
 	pLeftLayout_(NULL),
 	pRightLayout_(NULL),
 	pHyperLinkBrush_(NULL),
@@ -92,7 +94,7 @@ ViewDW::ViewDW(ViewGL* viewGL):
 	ZeroMemory( &rightPageOrigin, sizeof(rightPageOrigin));
 	ZeroMemory( &pnumLeftRect, sizeof(pnumLeftRect));
 	ZeroMemory( &pnumRightRect, sizeof(pnumRightRect));
-	ZeroMemory( &colorFromGL, sizeof(colorFromGL));
+
 	pnumLeftRect.top = 0; pnumLeftRect.bottom = 20.0f;
 	pnumLeftRect.left = 0; 
 	pnumRightRect.top = 0; pnumRightRect.bottom = 20.0f;
@@ -113,11 +115,12 @@ ViewDW::ViewDW(ViewGL* viewGL):
 ViewDW::~ViewDW()
 {  
 	log(L"In the destructor instanceID = %i", instanceID);
-	// Is it viewDW or the callback pointer ViewDW* mySelf
+	// Is it viewDW: instanceID == 1 or 
+	// the callback pointer ViewDW* mySelf: instanceID == 2
+	//
 	if(instanceID == 1){  // don't do all this if it's not viewDW
 	SafeRelease(&pTextFormat_);
 	SafeRelease(&pMenuFormat_);
-	SafeRelease(&pMathFormat_);
     SafeRelease(&pD2DFactory_);
     SafeRelease(&pDWriteFactory_);
 	SafeRelease(&m_pWICFactory);
@@ -138,7 +141,6 @@ void ViewDW::DiscardDeviceResources(){
 	SafeRelease(&pLeftLayout_);
 	SafeRelease(&pRightLayout_);
 	SafeRelease(&pMenuLayout_);
-	SafeRelease(&pMathLayout_);
 	SafeRelease(&m_pBitmap);
     SafeRelease(&pRT_);
 //		if (pRT_)
@@ -156,6 +158,18 @@ void ViewDW::create(HWND hwnd)
 
 	dwHandle = hwnd;
 	mainHandle = GetParent( dwHandle );
+
+	TCHAR exeDir[MAX_PATH];
+	GetModuleFileName( NULL, exeDir, MAX_PATH); 
+	log(L" ViewDW::create(HWND hwnd) executabe directory ...");
+	log(exeDir);
+
+	TCHAR path[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, path); 
+	workDir = path;
+	log(L" ViewDW::create(HWND hwnd) current directory ...");
+	log(workDir);
+
 	initDW();
 	openDW_file(constants::START_PAGE);
 	viewGL->hello_From_DW(Pages[pageNumber].glRoutine, dummy, 0);
@@ -172,16 +186,32 @@ HRESULT ViewDW::initDW(){
 	maxClientSize.height = static_cast<float>(GetSystemMetrics(SM_CYFULLSCREEN));
 	maxClientArea = maxClientSize.width * maxClientSize.height;
 
+	log(L"ViewDW::initDW() maxClientSize.height = %f",maxClientSize.height); 
+	log(L"ViewDW::initDW() maxClientSize.width = %f",maxClientSize.width); 
 
-	UINT DpI(0);
+	HMONITOR monitor = MonitorFromWindow(dwHandle, MONITOR_DEFAULTTONEAREST);
+	MONITORINFO info;
+	info.cbSize = sizeof(MONITORINFO);
+	GetMonitorInfo(monitor, &info);
+	int monitor_width = info.rcMonitor.right - info.rcMonitor.left;
+	int monitor_height = info.rcMonitor.bottom - info.rcMonitor.top;
+
+	log(L"ViewDW::initDW() monitor_width = %i", monitor_width); 
+	log(L"ViewDW::initDW() monitor_height = %i",monitor_height); 
+
+	resFactor = 1.25f*monitor_width/1920.0f;
+	imageScaleH = monitor_width/1920.0f;
+	imageScaleV = monitor_height/1080.0f;
+
 	HRESULT hr = D2D1CreateFactory( D2D1_FACTORY_TYPE_SINGLE_THREADED, &pD2DFactory_ );
 
 	if (SUCCEEDED(hr)){
 		pD2DFactory_->GetDesktopDpi(&dpiScaleX_, &dpiScaleY_);	
-		DpI = GetDpiForWindow(mainHandle);
 		dpiScaleX_ = 96/dpiScaleX_;
 		dpiScaleY_ = 96/dpiScaleY_;
 	}
+
+	log(L"ViewDW::initDW() dpiScaleX_ = %f", dpiScaleX_);
 
 	if (SUCCEEDED(hr)){
 		hr = DWriteCreateFactory( DWRITE_FACTORY_TYPE_SHARED,
@@ -228,20 +258,7 @@ HRESULT ViewDW::initDW(){
 
 		pMenuFormat_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
    }
-	if (SUCCEEDED(hr)){ 
-		hr = pDWriteFactory_->CreateTextFormat( 
-			L"Cambria Math",
-			NULL,  
-			DWRITE_FONT_WEIGHT_LIGHT,
-			DWRITE_FONT_STYLE_ITALIC,
-			DWRITE_FONT_STRETCH_NORMAL,
-			//constants::menuFontSize,
-			constants::bookFontSize,
-			L"en-us",
-			&pMathFormat_);
 
-		pMathFormat_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-   }
 	return hr;
 }
 
@@ -283,7 +300,7 @@ void ViewDW::ReadUTF16(const wstring &filename){
     std::stringstream ss;
     ss << file.rdbuf() << '\0';
 	int iUniTest = IS_TEXT_UNICODE_SIGNATURE; // 0xFEFF at beginning of file.
-	int cTextLength_;						//  byte order mask
+	int cTextLength_(0);						//  byte order mask
 
 	cTextLength_ = (UINT32)strlen(ss.str().c_str());
 	if(IsTextUnicode(ss.str().c_str(), cTextLength_, &iUniTest))
@@ -302,7 +319,8 @@ void ViewDW::ReadUTF16(const wstring &filename){
 //	close() /is needed only if the file must be closed before reaching the end of the
 //	scope  in  which it was declared. 
 } 
-void ViewDW::loadRecoverText() {
+void ViewDW::loadRecoverText(){
+
 	book = L"\\tdr1{\\fonttbl{\\f0\\fcharset0 Arial;}{\\endfonttbl;}0123456789xx\\f0\\$32 "
 		L"\n"
 		L"TDR was unable to find or open the start.tdr file\n"
@@ -315,6 +333,7 @@ void ViewDW::loadRecoverText() {
 		L"\n"
 		L"\\Mode_dW_gL04\\f0\\$32  ";
 }
+
 bool ViewDW::openDW_file( int reloadFlag ){  
 #ifdef DEBUG_GB	
 	log(L"ViewDW::openDW_file( int reloadFlag )");
@@ -327,17 +346,20 @@ bool ViewDW::openDW_file( int reloadFlag ){
 	if (reloadFlag == constants::HELP)
 	{
 		pageNumber = 0;
-		// Note relative path is not the same for running in VS and from taskbar
+//		// Note relative path is not the same for running in VS and from taskbar
 //		reload_Filename = L".\\src\\doc\\manual.tdr";
-		reload_Filename = L"C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\doc\\manual.tdr";
+//		reload_Filename = L"C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\doc\\manual.tdr";
+		reload_Filename = workDir;
+		reload_Filename.append( L"\\doc\\manual.tdr");
 		ReadUTF16(reload_Filename.c_str());
 	}
 	else if( reloadFlag == constants::START_PAGE )
 	{	
 		pageNumber = 0;
-		// Note relative path is not the same for running in VS and from taskbar
-//		reload_Filename = L".\\src\\doc\\start.tdr";
-		reload_Filename = L"C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\doc\\start.tdr";
+		reload_Filename = workDir;
+		reload_Filename.append( L"\\doc\\start.tdr");
+
+//		reload_Filename = L"C:\\Users\\pstan\\source\\repos\\Proj3dBook\\src\\doc\\start.tdr";
 
 		ReadUTF16( reload_Filename.c_str()); 
 
@@ -367,7 +389,7 @@ bool ViewDW::openDW_file( int reloadFlag ){
 		ofn.lpstrFileTitle = NULL;
 		ofn.nMaxFileTitle = 0 ;
 		ofn.lpstrInitialDir = NULL;
-		ofn.Flags = OFN_PATHMUSTEXIST|OFN_FILEMUSTEXIST;
+		ofn.Flags = OFN_PATHMUSTEXIST|OFN_FILEMUSTEXIST|OFN_NOCHANGEDIR;;
 		
 		if (GetOpenFileName(&ofn) == TRUE) {
 			// Save the file name for RELOAD call
@@ -622,7 +644,7 @@ void ViewDW::parseText(){
 //	log(fontNames[fontNumber]);
 
 // Find the number of pages; numberOfPages
-	int index = 0;
+	int index(0);
 	numberOfPages = 0;
 	while( index  > -1 )
 	{
@@ -1078,7 +1100,7 @@ void ViewDW::setTextLayout(int pageIndex, int side){
 int ViewDW::getNumber(WPARAM charCode){
 	//log(L"void ViewDW::getNumber( WPARAM charCode = %i", charCode);
 
-	static std::wstring number{};
+	static std::wstring number;
 
 // What about number pad input???
 
@@ -1187,14 +1209,18 @@ void ViewDW::drawMenu(float windowWidth ) {
 #ifdef DEBUG_GB	
 // log(L"ViewDW::drawMenu(int windowWidth = %f)", windowWidth );
 #endif
-//	DWRITE_TEXT_METRICS textMetrics;
-	D2D1_POINT_2F origin {0.0f};
-	DWRITE_TEXT_RANGE tRange {0}; // tRange.startPosition; tRange.length
+
+
+//	fontSizeFactor
+	D2D1_POINT_2F origin = {0.0f, 0.0f};
+	DWRITE_TEXT_RANGE tRange = {0, 0}; // tRange.startPosition; tRange.length
 	menuCellWidth = ( windowWidth - constants::pageMargin )/(constants::menuCells + 0.2f );
 
-	if (windowWidth < maxClientSize.width/2.0f)
-		menuFontSize = windowWidth * constants::menuFontScaleFactor;
-	else menuFontSize = 19.0f;
+	//if (windowWidth < maxClientSize.width/2.0f)
+	//	menuFontSize = windowWidth * constants::menuFontScaleFactor;
+	//else menuFontSize = resFactor*19.0f;
+
+	menuFontSize = fontSizeFactor*16.0f;
 	for( int i = 0; i < constants::menuCells; i++ ) 
 	{
 		SafeRelease(&pMenuLayout_);
@@ -1205,10 +1231,6 @@ void ViewDW::drawMenu(float windowWidth ) {
 			menuCellWidth + 20.0f,
 			constants::menuHeight,  
 			&pMenuLayout_ );
-
-//		pMenuLayout_->GetMetrics( &textMetrics);
-//       log(L"ViewDW::drawMenu(int textMetrics.lineCount = %i)", textMetrics.lineCount );
-
 
 		if( i == iMenuCell ) pMenuBrush_->SetColor(constants::menuTextHighlightColor);
 		else pMenuBrush_->SetColor(constants::menuTextColor);
@@ -1280,7 +1302,9 @@ void ViewDW::setPageSize(int pageNumber){
 	}
 
 	pageArea = rtSize.width*rtSize.height;
-	imageScale.height = rtSize.height / maxClientSize.height;
+	imageScale.height = imageScaleV*rtSize.height / maxClientSize.height;
+//	imageScale.height = rtSize.height / maxClientSize.height;
+
 	paperRect.right = rtSize.width; paperRect.bottom = rtSize.height;
 
 	menuRect.left = constants::pageMargin;
@@ -1289,8 +1313,11 @@ void ViewDW::setPageSize(int pageNumber){
 	if (Pages[pageNumber].mode == constants::dW_gL)
 	{
 		// Scale font to window size
-		fontSizeFactor = 1.25f*sqrt(2.0f*(pageArea / maxClientArea));
-		imageScale.width = 2.0f*rtSize.width / maxClientSize.width;
+//		fontSizeFactor = 1.25f*sqrt(2.0f*(pageArea / maxClientArea));
+		fontSizeFactor = resFactor*sqrt(2.0f*(pageArea / maxClientArea));
+
+		imageScale.width = imageScaleH*2.0f*rtSize.width / maxClientSize.width;
+//		imageScale.width = 2.0f*rtSize.width / maxClientSize.width;
 
 		if (rtSize.width > 2.0f*constants::pageMargin){
 			fpageWidth = rtSize.width - 2.0f*constants::pageMargin;
@@ -1306,8 +1333,11 @@ void ViewDW::setPageSize(int pageNumber){
 	if( Pages[pageNumber].mode == constants::dW_dW )
 	{   
 		// Scale font to window size
-		fontSizeFactor = 1.25f*sqrt(pageArea/maxClientArea);
-		imageScale.width = rtSize.width / maxClientSize.width;
+//		fontSizeFactor = 1.25f*sqrt(pageArea/maxClientArea);
+		fontSizeFactor = resFactor*sqrt(pageArea/maxClientArea);
+
+		imageScale.width = imageScaleH*rtSize.width / maxClientSize.width;
+//		imageScale.width = rtSize.width / maxClientSize.width;
 
 		// Do not allow fpageWidth or fpageHeight to go negative  < 1  !!
 		if( rtSize.width  > 3*constants::pageMargin )
@@ -1401,8 +1431,8 @@ void ViewDW::drawPageNumber(int pageNumber, int side){
 		&pMenuLayout_);
 
 	// Scale the font size
-	DWRITE_TEXT_RANGE tRange{ 0 };
-	D2D1_POINT_2F origin{ 0.0f };
+	DWRITE_TEXT_RANGE tRange = { 0, 0 };
+	D2D1_POINT_2F origin = { 0.0f, 0.0f };
 	tRange.length = pnum.size();
 	pMenuLayout_->SetFontSize(fontSizeFactor*14.0f, tRange);
 
@@ -1432,11 +1462,11 @@ void ViewDW::drawPageImages(int pageNumber, int side) {
 #ifdef DEBUG_GB
 //	log(L"ViewDW::drawPageImages(int pageNumber = %i, int side = %i) ", pageNumber, side);
 #endif
-	float width{0.0f};
+	float width(0.0f);
 	if (side == constants::RIGHT_PAGE) width = fpageWidth + constants::pageMargin;
 	else width = 0.0f;
 
-	D2D1_RECT_F imgRect{0};
+	D2D1_RECT_F imgRect = {0.0f, 0.0f};
 
 	for (int i = 0; i < Pages[pageNumber].images; i++) 
 	{
@@ -1444,7 +1474,8 @@ void ViewDW::drawPageImages(int pageNumber, int side) {
 		imgRect.top = imageScale.height*Pages[pageNumber].imageRect[i].top;
 
 		imageFilePathName.clear();
-		imageFilePathName = dwConst::imageFilePath;
+		imageFilePathName = workDir;
+		imageFilePathName.append(L"\\images\\");
 		imageFilePathName = imageFilePathName.append(Pages[pageNumber].imageNames[i]);
 		HRESULT hr =LoadBitmapFromFile(pRT_, m_pWICFactory,
 			(PWSTR)imageFilePathName.c_str(),
@@ -1540,6 +1571,9 @@ void ViewDW::drawDW(){
 // Set iMenuCell = -1 if mouse is out of the menu rectangle.
 // Set iMenuCell = menu item if mouse in the menu rectangle.
 void ViewDW::setMenuCell(int x, int y){
+
+	x = dpiScaleX_*x;
+    y = dpiScaleY_*y;
 
 	if (y > 2 && y < constants::menuHeight &&
 		x < (dwWidth - 5) && x > 0)
@@ -1648,6 +1682,11 @@ void ViewDW::keyDown(int key, LPARAM lParam){
 }
 
 
+// Display is called by ViewDW* mySelf a local instantiation of ViewDW 
+// goes out of scope on return to Wrapper_To_Call_Display.  This is the
+// reason for making bColorMenu, bFileMenu, bPageMenu, bMainMenu static.
+// So both mySelf and viewDW know the state of menu logic.
+
 void ViewDW::Display(glm::vec4* color) {
 //	log(L"ViewDW::lButtonDown(int x = %i , int y = %i, item = %i)", x, y, item);
 	//	Win::log(L"color.rgba =  %f  %f  %f  %f", color.r, color.g, color.b, color.a);
@@ -1656,6 +1695,8 @@ void ViewDW::Display(glm::vec4* color) {
 //	glm::vec4 colorFromGL = *color;
 	colorFromGL = *color;
 //	Win::log(L"ViewDW::Display colorFromGL =  %f  ", colorFromGL.r);
+
+//  mySelf's data menbers will be used for this call
 	lButtonDown(50, 50, 1);
 
 }
@@ -1683,27 +1724,30 @@ void ViewDW::Wrapper_To_Call_Display(void* pt2Object, glm::vec4* color) {
 //		it opens the hyperlink in a browser.
 //      or, if a Qlink;  calls viewGL->hello_From_DW() 
 void ViewDW::handleHitTest(int x, int y, int page){
-	DWRITE_HIT_TEST_METRICS hitTestMetrics{ 0 };
-	BOOL isTrailingHit{ 0 };
-	BOOL isInside{ 0 };
-	DWRITE_TEXT_RANGE textRange{ 0 };
-	IUnknown* X = NULL;
-//	std::wstring link;
-	int checkPage{};
-	linkIndex = -1;
 
-	bCallGL = FALSE;
+	float fX = dpiScaleX_*static_cast<float>(x);
+	float fY = dpiScaleY_*static_cast<float>(y);
+
+
+	DWRITE_HIT_TEST_METRICS hitTestMetrics;
+	ZeroMemory( &hitTestMetrics, sizeof( hitTestMetrics));
+	BOOL isTrailingHit = false;
+	BOOL isInside = false;
+	DWRITE_TEXT_RANGE textRange = { 0, 0 };
+	IUnknown* X = NULL;
+	int checkPage(0);
+	linkIndex = -1;
 
 	if (page == constants::LEFT_PAGE) checkPage = pageNumber;
 	else if (page == constants::RIGHT_PAGE) checkPage = pageNumber + 1;
  
 	if (page == constants::LEFT_PAGE) {
-		pLeftLayout_->HitTestPoint( (FLOAT)x - leftPageOrigin.x, (FLOAT)y - leftPageOrigin.y,
+		pLeftLayout_->HitTestPoint( fX - leftPageOrigin.x, fY - leftPageOrigin.y,
 			&isTrailingHit, &isInside, &hitTestMetrics);
 		pLeftLayout_->GetDrawingEffect(hitTestMetrics.textPosition, &X, &textRange);
 	}
 	else if (page == constants::RIGHT_PAGE) {
-		pRightLayout_->HitTestPoint((FLOAT)x - rightPageOrigin.x,(FLOAT)y - rightPageOrigin.y,
+		pRightLayout_->HitTestPoint(fX - rightPageOrigin.x, fY - rightPageOrigin.y,
 			&isTrailingHit, &isInside, &hitTestMetrics);
 		pRightLayout_->GetDrawingEffect(hitTestMetrics.textPosition, &X, &textRange);
 	}
@@ -1765,16 +1809,20 @@ void ViewDW::handleHitTest(int x, int y, int page){
 // If there are links on the page; call handleHitTest
 void ViewDW::checkForLink(UINT x, UINT y) {
 
+	float fX = dpiScaleX_*static_cast<float>(x);
+	float fY = dpiScaleY_*static_cast<float>(y);
+
+
 // Mouse is in left page
 if (Pages[pageNumber].mode == constants::dW_gL || 
-(Pages[pageNumber].mode == constants::dW_dW && (FLOAT)x < paperRect.right / 2.0f))
+(Pages[pageNumber].mode == constants::dW_dW && fX < paperRect.right / 2.0f))
 	{ 
 		if (Pages[pageNumber].links > 0 ||
 			Pages[pageNumber].qlinks > 0) handleHitTest(x, y, constants::LEFT_PAGE);
         return;
 	}
 // Mouse is in right page
-	if (Pages[pageNumber].mode == constants::dW_dW && (FLOAT)x > rightPageOrigin.x)
+	if (Pages[pageNumber].mode == constants::dW_dW && fX > rightPageOrigin.x)
 	{
 		// Don't go last page!
 		if( pageNumber + 1 < numberOfPages ){
@@ -2039,7 +2087,7 @@ int ViewDW::lButtonDown(int x, int y, int item){
 
 		else if(iMenuCell == 1)
 		{
-			std::wstring temp{};
+			std::wstring temp;
 			temp.clear();
 			temp = L"R ";
 			temp.append(std::to_wstring(colorFromGL.r), 0, 3);
@@ -2075,8 +2123,8 @@ int ViewDW::lButtonDown(int x, int y, int item){
 //  to a finite size.
 void ViewDW::moveTheCursor(){
 
-	RECT clientRect;
-	POINT pt;
+	RECT clientRect= { 0, 0, 0, 0 };
+	POINT pt = {0,0};
 	::GetClientRect(mainHandle, &clientRect);
 	pt.x = clientRect.right; pt.y = clientRect.bottom;
 	ClientToScreen(mainHandle, &pt);
@@ -2101,7 +2149,6 @@ int ViewDW::size( int width, int height ){
 	}
 
 	bDrawPage = TRUE;
-	bCallGL= FALSE;
 	InvalidateRect( dwHandle, NULL, FALSE );	
 	return 0;
 }
