@@ -1,4 +1,6 @@
 # Proj3dBook
+
+![Screen Shot](images/startPage.png)
 3dBook Update 		May 30 2018
 
 Nearly six months have passed since updating this repo.
