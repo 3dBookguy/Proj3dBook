@@ -622,11 +622,16 @@ void ViewGL::dodecahedron(int run){
 		numberOfTriangles = 60*n*n;  // 12 faces x 5*n*n/face 
 		Win::Triangle *T = new Win::Triangle[numberOfTriangles + 1];
 //		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
+
 //		Stick on an axis of symmetry
-		T[numberOfTriangles].v[0].xyzw.z  = 1.5f; T[numberOfTriangles].v[0].xyzw.a  = 1.0f;
-		T[numberOfTriangles].v[1].xyzw.z  = -1.5f;  T[numberOfTriangles].v[1].xyzw.a  = 1.0f;
-		T[numberOfTriangles].v[2].xyzw.a  = 1.0f;
-		for (int v = 0; v < 3; v++) T[numberOfTriangles].v[v].rgba = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
+		//	Using the last triangle to draw a Z axis 
+		for (int v = 0; v < 3; v++){
+			T[numberOfTriangles].v[v].xyzw = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			T[numberOfTriangles].v[v].rgba = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
+		}
+
+		T[numberOfTriangles].v[0].xyzw.z  = 1.5f; 
+		T[numberOfTriangles].v[1].xyzw.z  = -1.5f;  
 
 		// Specify number of cells / face
 		T[0].v[0].xyzw.x = static_cast<float>(n);
@@ -716,7 +721,7 @@ void ViewGL::dodecahedron(int run){
 	}
 
     else glDrawArrays(GL_TRIANGLES, offset_Zero, 3*(60*n*n + 1));
-
+	
 	glBindVertexArray(0);
 
 	if( step == 8 ){
@@ -741,12 +746,15 @@ void ViewGL::icosahedron(int run){
 	{
 		numberOfTriangles = 20*n*n;
 		Win::Triangle *T = new Win::Triangle[numberOfTriangles + 1];
-//		Win::Triangle *T = new Win::Triangle[numberOfTriangles]{};
-//		Using the last triangle to draw a Z axis 
-		T[numberOfTriangles].v[0].xyzw.z  = 1.5f; T[numberOfTriangles].v[0].xyzw.a  = 1.0f;
-		T[numberOfTriangles].v[1].xyzw.z  = -1.5f;  T[numberOfTriangles].v[1].xyzw.a  = 1.0f;
-		T[numberOfTriangles].v[2].xyzw.a  = 1.0f;
-		for (int v = 0; v < 3; v++) T[numberOfTriangles].v[v].rgba = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
+
+		//	Using the last triangle to draw a Z axis 
+		for (int v = 0; v < 3; v++){
+			T[numberOfTriangles].v[v].xyzw = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			T[numberOfTriangles].v[v].rgba = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
+		}
+
+		T[numberOfTriangles].v[0].xyzw.z  = 1.5f; 
+		T[numberOfTriangles].v[1].xyzw.z  = -1.5f;  
 
 		// Specify number of cells / face
 		T[0].v[0].xyzw.x = static_cast<float>(n);
@@ -802,7 +810,7 @@ void ViewGL::icosahedron(int run){
 			bLineFrame = TRUE;
 			glLineWidth(0.5f);
 		}
-		xyzAxes();  // Draw the fixed axes CS
+		// xyzAxes();  // Draw the fixed axes CS
 	}
 
 	// Draw the octahedron mesh
@@ -811,7 +819,7 @@ void ViewGL::icosahedron(int run){
 	glBindVertexArray(uiVAO[0]);
 	if( step == 7) glDrawArrays(GL_TRIANGLES, offset_Zero, 3*20*n*n);
 	else glDrawArrays(GL_TRIANGLES, offset_Zero, 3*(20*n*n + 1));
-//	glDrawArrays(GL_TRIANGLES, offset_Zero, 3*20*n*n);
+
 	glBindVertexArray(0);
 }
 

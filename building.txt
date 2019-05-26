@@ -1,0 +1,88 @@
+Building "Tedder"
+
+Loading Proj3dBook into Visual Studio:
+   
+Double cliking on 3dBook.sln should load the Proj3dBook into Visual Studio.
+
+If you get the project loaded, run Debug (F5) and Tedder compiles and runs
+properly you probably don't need this file.
+
+Below is a "Building Diary" of my test build on an older machine running Windows 8 - VS - 2013.
+
+1.) Choose a directory for the cloned repo.
+	
+2.) I opened bash in C:\Users\Pete\Documents
+
+3.) git clone https://github.com/3dBookguy/Proj3dBook.git
+	This created the directory C:\Users\Pete\Documents\Proj3dBook
+
+	with the following sub directories
+
+		C:\Users\Pete\Documents\Proj3dBook\images
+		C:\Users\Pete\Documents\Proj3dBook\Shade
+		C:\Users\Pete\Documents\Proj3dBook\doc
+		C:\Users\Pete\Documents\Proj3dBook\debug
+
+
+	This is different from the directory structure of the Windows 10 machine I pushed the repo to git from.
+
+  	The directory structure on my local machine is C:\Users	\Pstan ...\Proj3dBook\src\images
+
+	The is no src is not there on the clone?
+
+4.)  Double click on ...\Proj3dBook\3dBook.sln
+	This opened Proj3dBook in VS - 2013
+
+5.)  VS F5 to run degug
+	Error	1	error MSB8020: The builds tools for v141 (Platform Toolset = 'v141') cannot be found.
+
+Fix: In VS:  Project/3dBook Properties/Configuration Properties/Platform Tooset
+		/Visual Studio 2017 (v141)
+
+Changed Visual Studio 2017 (v141) to Visual Studio 2012 (v110)    
+
+6.)  VS F5 to run debug
+
+12 errors like below
+
+Cannot open include file: 'excpt.h': No such file or directory
+
+Fix: Property Pages/VC++ Directories/Include Directories - change to match the settings of other projects on the Windows 8 - VS - 2013 machine.
+
+
+7.)  VS F5 to run debug
+
+Success - Tedder up and running
+
+Property Pages:
+
+Cloning brings 3dBook's project settings(Property Pages) as they are in my local repo 
+to your local repo.  These are unlikely to match.  If you have a VS project that uses
+the same APIs as Tedder( DirectWrite, D2D, OpenGL, GLEW, and GLM ).  Matching the  
+the 3dBook include settings in Property Pages to your VS project Property Pages should
+work.
+
+Some Property Page setting to check.
+
+In VS:  Project/3dBook Properties/Configuration Properties/VC++ Directories
+
+Project/3dBook Properties/Configuration Properties/
+	C/C++/General/Additional Incude Directories
+
+		Ex: My setting:  C:\Users\pstan\source\glew-2.1.0\include;%(AdditionalIncludeDirectories)
+
+
+Project/3dBook Properties/Configuration Properties/
+	Linker/Input/Additional Dependencies
+
+		Ex: My setting: 
+d2d1.lib;
+						dwrite.lib;
+						WindowsCodecs.lib;
+						opengl32.lib;
+						glu32.lib;
+						XInput.lib;
+						glew32.lib;
+						comctl32.lib;%(AdditionalDependencies)
+
+						glm-0.9.9.3

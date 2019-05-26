@@ -8,11 +8,11 @@ Include file for ModelGL.cpp and ViewGL.cpp.
 #ifndef MODEL_GL_H
 #define MODEL_GL_H
 
-////needed to add this line to ModelGL.h   
+//needed to add this line to ModelGL.h  for older glm 
 #define GLM_FORCE_RADIANS
 //
 ////#include <glm/ext/matrix_transform.hpp>  
-//// try below instead of above
+//// try below instead of above for older glm
 //#include <glm/gtc/matrix_transform.hpp>
 
 
@@ -21,7 +21,7 @@ Include file for ModelGL.cpp and ViewGL.cpp.
 // ViewGL includes this file so we need 
 // glm matrix includes here.
 #include <glm/glm.hpp>
-//#include <glm/ext/matrix_transform.hpp>
+//#include <glm/ext/matrix_transform.hpp>  //
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <glm/ext.hpp>
