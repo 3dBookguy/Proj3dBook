@@ -14,6 +14,7 @@ Handles calls from ViewGL for rendering data.
 #include <string>
 #include "modelGL.h"
 
+
 namespace Win
 {
     class ViewGL
@@ -113,7 +114,7 @@ namespace Win
 		int n;  // Input for mesh functions
 		int step;
 		int numberOfTriangles;
-		int triangleCount;
+		 int triangleCount;
 
 
 		GLuint uiVBO[25];	// Buffer handles
@@ -121,13 +122,13 @@ namespace Win
 
 //  void glVertexAttribPointer(vertShade, attribBytes, ...
 		//  params
-		const GLuint vertShade = 0;
-		const GLuint fragShade = 1;
-		const GLuint vec4_Size = 4;
+		static const GLuint vertShade = 0;
+		static const GLuint fragShade = 1;
+		static const GLuint vec4_Size = 4;
 		// Stride for 2 vec4 attributes close packed.
-		const GLuint stride_2_vec4 = 32; 
-		const GLuint offset_1_vec4 = 16;
-		const GLuint offset_Zero  = 0;
+		static const GLuint stride_2_vec4 = 32; 
+		static const GLuint offset_1_vec4 = 16;
+		static const GLuint offset_Zero  = 0;
 
 
 

@@ -1,6 +1,3 @@
-===== Log started at 2019-05-25, 9:25:00. =====
+===== Log started at 2019-05-26, 5:02:55. =====
 
-9:25:00  Redirect log to dialog box.
-
-
-===== END OF LOG =====
+5:02:55  Redirect log to dialog box.

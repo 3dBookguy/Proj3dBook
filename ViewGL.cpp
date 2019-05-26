@@ -35,11 +35,10 @@ ViewGL::ViewGL(ModelGL* model):
 	bLineFrame(FALSE),
 	bPointFrame(FALSE),
 	n(1),
-	triangleCount(0)
-{
-	paletteColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-}
-
+	triangleCount(0),
+	paletteColor(0.0f)
+{}
+	
 ViewGL::~ViewGL(){ }
 
 void ViewGL::create(HWND hwnd){ 

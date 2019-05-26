@@ -25,10 +25,10 @@ using namespace Win;
 
 // Static color menu menbers
 bool ViewDW::bColorMenu = false;
-bool  ViewDW::bMainMenu = true;
-bool  ViewDW::bPageMenu = false;
-bool  ViewDW::bFileMenu = false;
-glm::vec4 ViewDW::colorFromGL = {0.0f, 0.0f,0.0f,0.0f};
+bool ViewDW::bMainMenu = true;
+bool ViewDW::bPageMenu = false;
+bool ViewDW::bFileMenu = false;
+glm::vec4 ViewDW::colorFromGL(0.0f);
 std::vector<std::wstring> ViewDW::menuText;
 
 // Constuctor for ViewDW* mySelf out Callback pointer
@@ -49,14 +49,10 @@ ViewDW::ViewDW(ViewGL* viewGL):
 	pageNumber(0),
 	numberOfPages(0),
 	linkIndex(-1),
-//	qlinkIndex(-1),
 
 // Menu Logic
 	bDrawPage(TRUE),
 	bDrawMenu(TRUE),
-	//bMainMenu(TRUE),
-	//bFileMenu(FALSE),
-	//bPageMenu(FALSE),
 	bNumberMenu(FALSE),
 		userInt(0),
 		userFloat(0),
@@ -423,6 +419,7 @@ bool ViewDW::openDW_file( int reloadFlag ){
 		return TRUE; 
 	} 
 }
+
 void ViewDW::reportFormatError(int pageNo, int index, std::wstring temp){
 
 	// Correct the format error: add a trailing space.
@@ -436,15 +433,13 @@ void ViewDW::reportFormatError(int pageNo, int index, std::wstring temp){
 	page.append(to_wstring(index));
 
 	blurb.append(L" format error found on page \n"
-			"check for missing space after the format block.\n"
-			"See log.txt for details.  TDR will add the missing space\n"
-			"but the .tdr file needs to be corrected.");
+			L"check for missing space after the format block.\n"
+			L"See log.txt for details.  TDR will add the missing space\n"
+			L"but the .tdr file needs to be corrected.");
 
 	MessageBox(NULL, blurb.c_str(), page.c_str(), MB_ICONWARNING);
 }
-
-
-
+ 
 // The text is now in std::wstring book and we start parsing.
 // We need the count of formats to resize our Pages struct
 // std::vectors. Just counting the format blocks here.

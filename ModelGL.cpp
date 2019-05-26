@@ -933,7 +933,7 @@ void ModelGL::colorPalette(Win::Rectangle(&rect)[1331]){
 
 	int count(0); int row(0); int col(0);
 
-	glm::vec4 color = {0.0f, 0.0f, 0.0f, 0.0f};
+	glm::vec4 color(0.0f);
 
 	for (int R = 0; R < 11; R++)
 	{
